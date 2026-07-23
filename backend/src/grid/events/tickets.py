@@ -26,7 +26,15 @@ class _Ticket:
 _tickets: dict[str, _Ticket] = {}
 
 
+def _sweep_expired() -> None:
+    now = time.monotonic()
+    expired = [token for token, ticket in _tickets.items() if ticket.expires_at < now]
+    for token in expired:
+        del _tickets[token]
+
+
 def issue_ticket(user_id: uuid.UUID) -> str:
+    _sweep_expired()
     token = secrets.token_urlsafe(32)
     _tickets[token] = _Ticket(user_id=user_id, expires_at=time.monotonic() + _TICKET_TTL_SECONDS)
     return token

@@ -5,6 +5,57 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — PR review pass: merge #2 and #3, Phase 1 fully in `main`
+
+Worked the review→fix→merge loop on both open Phase 1 PRs (Opus for review, Sonnet
+for fixes, per gradius's process). Both are now merged into `main`; Phase 1 is
+complete on `main`, not just on phase branches.
+
+**PR #2 (Phase 1a):** approve-with-nits from review. Fixed before merge: `add_member`
+could let the sole owner demote themselves (only `remove_member` had a last-owner
+guard — now both share `_count_owners`); FK/unique-constraint violations
+(`add_member` with an unknown user, concurrent duplicate register/entity-type create)
+surfaced as raw 500s instead of clean 404/409 — now caught and translated;
+`key_prefix` now derives from the full `grid_<token>` string so it matches what the
+user sees; session auth now rejects deactivated users like the API-key path already
+did. Merging also picked up `main`'s `chore/pr-review-skills` PR (landed while 1a was
+in flight) — resolved the `docs/JOURNAL.md` conflict by keeping both sessions'
+entries, newest first.
+
+**PR #3 (Phase 1b):** was stacked on `phase-1a-models-auth`; retargeted its base to
+`main` after #2 merged and merged `main` into the branch — conflicts were mechanical
+(cases.py/test_cases.py: both branches touched `add_member`/tests independently,
+resolved by keeping both features) except one real bug the merge surfaced:
+`record_event`'s eager `db.flush()` raised the FK `IntegrityError` *before* reaching
+the `try/except` added around `add_member`'s `commit()`, so the guard never fired —
+fixed by wrapping `record_event` + `commit` together, not just `commit`.
+
+Review of #3 (approve-with-nits) found a real correctness gap: `_replay` read the
+backlog, *then* `websocket.accept()` + `connection_manager.subscribe()` — any event
+committed in that window was neither in the backlog nor delivered live, silently
+dropped for the connection's lifetime. Fixed by subscribing right after `accept()`,
+before the backlog read, so the only failure mode left is a same-event double
+delivery (backlog + live) in that window, which callers already need to tolerate via
+seq-based dedup for reconnects. Added ADR-011 for the WS ticket auth mechanism
+(should have shipped with #3 — it's a new trust boundary and CLAUDE.md wants ADRs for
+those). Declined one review suggestion: shortening the WS connection's DB-session
+lifetime by bypassing the `Depends(get_session)` dependency — tests override that
+exact dependency for the disposable `_test` database (`tests/conftest.py`), and
+calling the session-maker directly instead would've silently pointed WS DB access at
+the real dev database the moment anyone wrote a WS test. Left it as a documented
+known limitation instead of risking that. Also declined adding new WS
+replay/authz tests this session — Starlette's sync `TestClient.websocket_connect`
+would run the app in a different thread's event loop than the async `db_session`
+fixture, which is exactly the event-loop-binding risk 1b's session flagged for live
+broadcast; doing this safely likely wants `httpx-ws` or similar, which is a new
+dependency (CLAUDE.md: stop-and-ask), not a same-session call.
+
+**Surprises:** the record_event/IntegrityError interaction above — "wrap the commit"
+isn't enough once a helper does its own flush; the whole write path needs the guard.
+
+Next: Phase 2 — frontend core (canvas & CRUD), starting with the theme system
+(CSS-variable tokens, industrial default, light + dark, switcher) per PLAN.md.
+
 ## 2026-07-23 — Phase 1b: CRUD, event log/WS, OpenAPI client, authz matrix — Phase 1 complete
 
 Picked up right where 1a left off, on `phase-1b-crud-events` (stacked on
