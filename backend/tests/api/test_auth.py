@@ -67,8 +67,10 @@ async def test_api_key_auth_without_cookie(
 
     created = await owner.post("/api/v1/auth/api-keys", json={"name": "ci-bot"})
     assert created.status_code == 201
-    token = created.json()["token"]
+    body = created.json()
+    token = body["token"]
     assert token.startswith("grid_")
+    assert token.startswith(body["key_prefix"])
 
     bearer_client = await api_client_factory()
     response = await bearer_client.get(

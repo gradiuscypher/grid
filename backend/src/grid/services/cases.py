@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from grid.core.errors import ForbiddenError, NotFoundError
@@ -129,12 +130,25 @@ async def list_members(db: AsyncSession, *, case_id: uuid.UUID, user: User) -> l
     return list(result)
 
 
+async def _count_owners(db: AsyncSession, *, case_id: uuid.UUID) -> int:
+    owners = await db.scalars(
+        select(CaseMember).where(CaseMember.case_id == case_id, CaseMember.role == CaseRole.OWNER)
+    )
+    return len(list(owners))
+
+
 async def add_member(
     db: AsyncSession, *, case_id: uuid.UUID, actor: User, target_user_id: uuid.UUID, role: CaseRole
 ) -> CaseMember:
     await require_role(db, case_id=case_id, user_id=actor.id, minimum=CaseRole.OWNER)
     existing = await db.get(CaseMember, {"case_id": case_id, "user_id": target_user_id})
     if existing is not None:
+        if (
+            existing.role == CaseRole.OWNER
+            and role != CaseRole.OWNER
+            and await _count_owners(db, case_id=case_id) <= 1
+        ):
+            raise ForbiddenError("cannot demote the last owner")
         existing.role = role
         await record_event(
             db,
@@ -156,7 +170,11 @@ async def add_member(
         type="case.member_added",
         payload={"user_id": str(target_user_id), "role": role.value},
     )
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise NotFoundError(f"user {target_user_id} not found") from exc
     return member
 
 
@@ -167,14 +185,8 @@ async def remove_member(
     member = await db.get(CaseMember, {"case_id": case_id, "user_id": target_user_id})
     if member is None:
         raise NotFoundError("member not found")
-    if member.role == CaseRole.OWNER:
-        owners = await db.scalars(
-            select(CaseMember).where(
-                CaseMember.case_id == case_id, CaseMember.role == CaseRole.OWNER
-            )
-        )
-        if len(list(owners)) <= 1:
-            raise ForbiddenError("cannot remove the last owner")
+    if member.role == CaseRole.OWNER and await _count_owners(db, case_id=case_id) <= 1:
+        raise ForbiddenError("cannot remove the last owner")
     await db.delete(member)
     await record_event(
         db,

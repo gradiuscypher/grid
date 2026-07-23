@@ -151,6 +151,57 @@ async def test_editor_cannot_delete_case(api_client_factory: ClientFactory) -> N
     assert response.status_code == 403
 
 
+async def test_cannot_demote_last_owner(api_client_factory: ClientFactory) -> None:
+    owner = await api_client_factory()
+    owner_user = await _register(owner, "owner@example.com")
+    case = await _create_case(owner)
+
+    response = await owner.post(
+        f"/api/v1/cases/{case['id']}/members",
+        json={"user_id": owner_user["id"], "role": "viewer"},
+    )
+    assert response.status_code == 403
+
+    members = (await owner.get(f"/api/v1/cases/{case['id']}/members")).json()
+    assert members[0]["role"] == "owner"
+
+
+async def test_can_demote_owner_when_another_owner_remains(
+    api_client_factory: ClientFactory,
+) -> None:
+    owner = await api_client_factory()
+    owner_user = await _register(owner, "owner@example.com")
+    case = await _create_case(owner)
+
+    second = await api_client_factory()
+    second_user = await _register(second, "second-owner@example.com")
+    await owner.post(
+        f"/api/v1/cases/{case['id']}/members",
+        json={"user_id": second_user["id"], "role": "owner"},
+    )
+
+    response = await owner.post(
+        f"/api/v1/cases/{case['id']}/members",
+        json={"user_id": owner_user["id"], "role": "viewer"},
+    )
+    assert response.status_code == 201
+    assert response.json()["role"] == "viewer"
+
+
+async def test_add_member_with_unknown_user_id_returns_404(
+    api_client_factory: ClientFactory,
+) -> None:
+    owner = await api_client_factory()
+    await _register(owner, "owner@example.com")
+    case = await _create_case(owner)
+
+    response = await owner.post(
+        f"/api/v1/cases/{case['id']}/members",
+        json={"user_id": "00000000-0000-0000-0000-000000000000", "role": "viewer"},
+    )
+    assert response.status_code == 404
+
+
 async def test_read_only_api_key_cannot_create_case(api_client_factory: ClientFactory) -> None:
     owner = await api_client_factory()
     await _register(owner, "owner@example.com")

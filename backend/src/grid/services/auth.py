@@ -2,6 +2,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from grid.core.config import get_settings
@@ -18,7 +19,11 @@ async def register_user(db: AsyncSession, *, email: str, display_name: str, pass
         raise ConflictError(f"email {email!r} is already registered")
     user = User(email=email, display_name=display_name, password_hash=hash_password(password))
     db.add(user)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise ConflictError(f"email {email!r} is already registered") from exc
     await db.refresh(user)
     return user
 
@@ -50,9 +55,12 @@ async def get_user_by_session_token(db: AsyncSession, *, token: str) -> User | N
     )
     if session is None or session.expires_at < datetime.now(UTC):
         return None
+    user = await db.get(User, session.user_id)
+    if user is None or not user.is_active:
+        return None
     session.last_seen_at = datetime.now(UTC)
     await db.commit()
-    return await db.get(User, session.user_id)
+    return user
 
 
 async def revoke_session(db: AsyncSession, *, token: str) -> None:
@@ -68,17 +76,18 @@ async def create_api_key(
     db: AsyncSession, *, user: User, name: str, read_only: bool = False
 ) -> tuple[ApiKey, str]:
     token = generate_token()
+    raw_key = f"{API_KEY_PREFIX}{token}"
     key = ApiKey(
         user_id=user.id,
         name=name,
         key_hash=hash_token(token),
-        key_prefix=token[:8],
+        key_prefix=raw_key[:8],
         read_only=read_only,
     )
     db.add(key)
     await db.commit()
     await db.refresh(key)
-    return key, f"{API_KEY_PREFIX}{token}"
+    return key, raw_key
 
 
 async def get_user_by_api_key(db: AsyncSession, *, raw_key: str) -> tuple[User, ApiKey] | None:
