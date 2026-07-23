@@ -100,6 +100,15 @@ async def me(actor: CurrentActor) -> User:
     return actor.user
 
 
+@router.get("/lookup", response_model=UserOut, operation_id="lookup_user_by_email")
+async def lookup(email: EmailStr, actor: CurrentActor, db: DbSession) -> User:
+    """Exact-match lookup so an owner can find a user_id to add as a case member
+    (POST /cases/{id}/members takes user_id, not email). Single-tenant (ADR-010):
+    every account is already the same team, so an authenticated directory lookup
+    isn't a meaningful new enumeration surface."""
+    return await auth_service.lookup_user_by_email(db, email=email)
+
+
 @router.post(
     "/api-keys",
     response_model=ApiKeyCreatedOut,

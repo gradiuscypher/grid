@@ -872,6 +872,42 @@ export type GetMeResponses = {
 
 export type GetMeResponse = GetMeResponses[keyof GetMeResponses];
 
+export type LookupUserByEmailData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path?: never;
+    query: {
+        /**
+         * Email
+         */
+        email: string;
+    };
+    url: '/api/v1/auth/lookup';
+};
+
+export type LookupUserByEmailErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LookupUserByEmailError = LookupUserByEmailErrors[keyof LookupUserByEmailErrors];
+
+export type LookupUserByEmailResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserOut;
+};
+
+export type LookupUserByEmailResponse = LookupUserByEmailResponses[keyof LookupUserByEmailResponses];
+
 export type ListApiKeysData = {
     body?: never;
     headers?: {

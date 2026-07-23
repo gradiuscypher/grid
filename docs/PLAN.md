@@ -123,6 +123,11 @@ same from outside.
 
 **Goal:** multiplayer feel and large-graph wayfinding.
 
+- [ ] Case membership UI: member list + invite-by-email + role change + remove on
+      `CaseDetailPage`, backed by `GET /auth/lookup` (added 2026-07-23) and the
+      existing `CaseMember` add/remove/list endpoints (Phase 1b). Prerequisite for
+      the rest of this phase — presence/multiplayer needs a real way to get a second
+      account onto a case first.
 - [ ] Presence over WS: cursors, selections, viewport indicators, user colors
 - [ ] Groups/regions: create from selection, visual boundary, group context notes,
       group-scoped operations (run transform on all members)
