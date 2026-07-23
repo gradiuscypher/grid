@@ -47,7 +47,7 @@ pass (playwright installed ad hoc into the scratchpad — not a project dependen
 just this session's driver) through register → theme toggle → create case → case
 detail → theme toggle → logout, in both themes, screenshots captured at each step,
 console checked clean of unexpected errors (only the expected 401 from the
-post-logout `/auth/me` probe). 19 Vitest tests: theme store (system-preference
+post-logout `/auth/me` probe). 15 Vitest tests: theme store (system-preference
 fallback, persistence, toggle), the FastAPI-error-to-string helper, and two
 router-integration suites (auth guard redirects, login/logout flow, create-case
 form) that render the real route tree with the API layer mocked.
