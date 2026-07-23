@@ -195,8 +195,8 @@ frontend/
   replace it for 10k+ graphs post-MVP without touching app logic.
 - **Theming:** every color/spacing/font flows through CSS-variable tokens. Default
   theme: industrial — sharp 1px lines, high-contrast, usgraphics.com design language.
-  Default typeface: **Berkeley Mono** (woff2 set in-repo at `berkeley-mono-web/`, to be
-  moved to `frontend/public/fonts/` in Phase 2), self-hosted via `@font-face` — no
+  Default typeface: **Berkeley Mono**, self-hosted via `@font-face` from
+  `frontend/public/fonts/` (gitignored, supplied locally per clone) — no
   external font fetches, ever (self-hostable security product). Font family is itself
   a theme token with a fallback stack (`ui-monospace, 'JetBrains Mono', monospace`);
   other themes may bring other fonts. Licensing note: Berkeley Mono is commercially

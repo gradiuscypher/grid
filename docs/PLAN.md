@@ -55,14 +55,14 @@ compiles.
 
 **Goal:** a themed, usable single-player graph UI on the real API.
 
-- [ ] Theme system: CSS-variable tokens, industrial default (sharp lines), light +
+- [x] Theme system: CSS-variable tokens, industrial default (sharp lines), light +
       dark, theme switcher; font-family as a token
-- [ ] Berkeley Mono: copy `berkeley-mono-web/` → `frontend/public/fonts/` (both paths
+- [x] Berkeley Mono: copy `berkeley-mono-web/` → `frontend/public/fonts/` (both paths
       gitignored — licensed font, supplied locally), wire `@font-face`
       (Regular/Bold/Oblique/Bold-Oblique, `font-display: swap`), fallback stack
       `ui-monospace, 'JetBrains Mono', monospace`; app must render fine when the
       files are absent; no external font fetches anywhere
-- [ ] Auth screens; case list/create; TanStack Router + Query wired to generated client
+- [x] Auth screens; case list/create; TanStack Router + Query wired to generated client
 - [ ] Canvas (our renderer interface wrapping React Flow): custom node component per
       entity type (icon, value, type badge, provenance marker), pan/zoom, multi-select,
       create node, connect edges, delete, drag with debounced position persistence

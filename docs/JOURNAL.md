@@ -5,6 +5,97 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — `/review-changes` pass on `phase-2a-shell-auth`
+
+Ran `/review-changes` against `main` on the Phase 2a branch (no PR yet). Verdict was
+approve-with-nits: `make lint typecheck test` clean (15 Vitest tests, matching the
+actual count — see below), conventions held, no new backend security surface (the
+frontend just calls the already-reviewed Phase 1 auth endpoints; confirmed no
+token/session data touches `localStorage`, only the theme preference does). Four nits,
+all fixed:
+
+- JOURNAL's previous entry claimed 19 Vitest tests; the real count is 15. Corrected.
+- Theme flash-prevention logic is necessarily duplicated between `index.html`'s inline
+  pre-hydration script and `state/themeStore.ts` (the inline script can't import a
+  module — it has to run before any JS loads). Added comments in both files
+  cross-referencing the other, so a future change to the storage key or fallback rule
+  doesn't silently update only one side.
+- `authedLayoutRoute` and `caseDetailRoute` had no `errorComponent`, so a loader/guard
+  failure (dead case ID, `/auth/me` network error) fell through to TanStack Router's
+  unthemed default error UI. Added `components/RouteError.tsx` (themed panel, reuses
+  `apiErrorMessage`, `reset()` wired to a Retry button) and wired it into both routes.
+- Focus-outline width was hardcoded `2px` in two stylesheets while every other
+  border-ish value went through a token. Added `--focus-width` to `theme/tokens.css`
+  and switched both call sites to it.
+
+No pushback, no deferrals — all four were small and in-scope. Not pushing or
+re-requesting review; that's gradius's call.
+
+## 2026-07-23 — Phase 2a: theme system, Berkeley Mono, auth + case-list app shell
+
+Phase 1 was fully merged to `main`, so this session opened Phase 2 (frontend core).
+Split it into 2a/2b up front (confirmed with gradius) since the full checklist —
+theme, fonts, auth, canvas, inspector, WS sync, command palette, both test layers —
+was too much for one sitting, mirroring how Phase 1 became 1a/1b. This session
+(`phase-2a-shell-auth`) covered the app shell: theme system, Berkeley Mono, and
+auth/case-list wired to the real API through TanStack Router + Query. Canvas,
+inspector, WS live-sync, command palette, and Playwright e2e are 2b.
+
+Built: CSS-variable theme tokens (industrial look, sharp corners, light/dark via
+`[data-theme]`), a Zustand store for the toggle persisted to `localStorage` with a
+blocking inline `<head>` script so there's no flash of the wrong theme on load;
+Berkeley Mono wired via `@font-face` from `frontend/public/fonts/`, verified to
+degrade cleanly to the fallback stack when the (gitignored) files are absent — a
+404 on a `@font-face` src just skips that font in the stack, no JS needed; a
+code-based TanStack Router route tree (no plugin — small enough that manual
+`addChildren` composition beat the codegen complexity) with a pathless authed
+layout route gating `/` (case list + create) and `/cases/$caseId` (name/description
+only — canvas placeholder text points at 2b) behind `/login` and `/register`; Button/
+TextField/Panel primitives; an API-layer wrapper (`api/auth.ts`, `api/cases.ts`,
+`api/errors.ts`) that turns the generated SDK's `{data,error}` union into
+throw-on-error functions plus a FastAPI-detail-to-string formatter for both plain
+strings and pydantic validation-error arrays.
+
+**Real bug caught by actually running it, not just the test suite:** every
+authenticated request 401'd with "missing client header" once wired against the
+live API. `deps.py`'s CSRF mitigation (ARCHITECTURE §5: session-cookie auth requires
+a custom header, since a bare cross-site fetch can't attach one without CORS
+pre-approval) was never something the OpenAPI schema could describe, so
+`@hey-api/openapi-ts` had no way to generate for it. Fixed with one line —
+`client.setConfig({ headers: { 'X-Grid-Client': 'web' } })` in `api/client.ts` — but
+it would have shipped invisibly broken if this session had stopped at `make lint
+typecheck test` green without a real browser pass. Reinforces the CLAUDE.md rule
+about not claiming a UI change works without driving it.
+
+**Verification:** `make lint typecheck test` clean for both stacks. Drove the actual
+app against the live compose stack (`make dev`) with a scripted headless-Chromium
+pass (playwright installed ad hoc into the scratchpad — not a project dependency,
+just this session's driver) through register → theme toggle → create case → case
+detail → theme toggle → logout, in both themes, screenshots captured at each step,
+console checked clean of unexpected errors (only the expected 401 from the
+post-logout `/auth/me` probe). 15 Vitest tests: theme store (system-preference
+fallback, persistence, toggle), the FastAPI-error-to-string helper, and two
+router-integration suites (auth guard redirects, login/logout flow, create-case
+form) that render the real route tree with the API layer mocked.
+
+Surprises: the frontend Docker image's named `node_modules` volume doesn't pick up
+new dependencies from a host-side `pnpm add` — had to `docker compose exec -e CI=true
+frontend pnpm install`, which went sideways (left a stray root-owned `.pnpm-store/`
+inside the bind-mounted `frontend/` — removed with `sudo rm -rf`), so ended up doing
+a clean `down` + volume removal + `up --build` instead. If this recurs, that's the
+faster path from the start. Also needed `sudo npx playwright install-deps chromium`
+to get headless Chromium's shared libs (`libnspr4` etc.) — one-time host setup, not
+a repo concern.
+
+Left running: `make dev` is still up (db/api/frontend) for gradius to poke at
+directly; `make down` to stop it.
+
+Next: Phase 2b — canvas (React Flow wrapper + custom node components per entity
+type), inspector panel, WS subscription patching the Query cache, command palette,
+and the Vitest + Playwright e2e coverage for all of Phase 2 (the meaningful e2e path
+— login → create case → build a graph → reload → intact — needs the canvas to exist
+first).
+
 ## 2026-07-23 — PR review pass: merge #2 and #3, Phase 1 fully in `main`
 
 Worked the review→fix→merge loop on both open Phase 1 PRs (Opus for review, Sonnet

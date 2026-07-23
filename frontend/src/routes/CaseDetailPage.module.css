@@ -1,0 +1,29 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 720px;
+}
+
+.back {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  margin: 0;
+}
+
+.description {
+  color: var(--color-text-muted);
+}
+
+.placeholder {
+  border: var(--border-width) dashed var(--color-border-muted);
+  padding: var(--space-4);
+  color: var(--color-text-muted);
+  text-align: center;
+}
