@@ -48,6 +48,31 @@ async def test_me_without_cookie_unauthorized(api_client: httpx.AsyncClient) -> 
     assert response.status_code == 401
 
 
+async def test_lookup_finds_existing_user_by_email(
+    api_client_factory: Callable[[], Awaitable[httpx.AsyncClient]],
+) -> None:
+    owner = await api_client_factory()
+    await _register(owner, "owner@example.com")
+
+    other = await api_client_factory()
+    other_user = (await _register(other, "other@example.com")).json()
+
+    response = await owner.get("/api/v1/auth/lookup", params={"email": "other@example.com"})
+    assert response.status_code == 200
+    assert response.json()["id"] == other_user["id"]
+
+
+async def test_lookup_unknown_email_not_found(api_client: httpx.AsyncClient) -> None:
+    await _register(api_client)
+    response = await api_client.get("/api/v1/auth/lookup", params={"email": "nobody@example.com"})
+    assert response.status_code == 404
+
+
+async def test_lookup_requires_auth(api_client: httpx.AsyncClient) -> None:
+    response = await api_client.get("/api/v1/auth/lookup", params={"email": "alice@example.com"})
+    assert response.status_code == 401
+
+
 async def test_logout_invalidates_session(api_client: httpx.AsyncClient) -> None:
     await _register(api_client)
     assert (await api_client.get("/api/v1/auth/me")).status_code == 200

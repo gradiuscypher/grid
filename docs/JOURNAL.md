@@ -5,6 +5,43 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — User lookup-by-email, to unblock cross-account sync testing
+
+gradius realized there was no way to actually get a second account onto a case to test
+WS live-sync (ADR-006) across real accounts. Investigated first rather than assuming a
+gap: case-sharing already exists in full from Phase 1b (`CaseMember` owner/editor/viewer
+RBAC, `add_member`/`remove_member`/`list_members` services and REST endpoints,
+authz-tested in `test_cases.py`). The actual missing piece was narrower — `add_member`
+takes a `user_id`, and there was no way to resolve a `user_id` from an email, so the
+existing sharing API couldn't be driven against a real second account outside of tests
+(which cheat by reading the other user's own registration response).
+
+Asked gradius to scope this (real gap, not on PLAN.md, borderline security-surface):
+build a full member-management feature now, or the minimal thing needed to unblock
+testing with the gap logged for later. Chose minimal — added `GET /auth/lookup?email=`
+(`services/auth.py` + `api/v1/auth.py`), authenticated, exact-match only, 404 on miss.
+Single-tenant (ADR-010) makes this a low-sensitivity addition: everyone on a stack is
+already the same team, so an authenticated directory lookup isn't a meaningful new
+enumeration surface the way it would be in a multi-tenant product.
+
+Verified for real, not just unit-tested: with `make dev`'s `db`+`api` up, registered two
+live accounts via curl, looked the second one up by email, added them as an editor on a
+fresh case, then wrote a small asyncio/`websockets` script that opened `/ws/cases/{id}`
+for the second account and confirmed it received a live `node.created` event the moment
+the owner's account created a node — real cross-account WS sync, not two tabs of the
+same session. `make lint typecheck test` (backend 81 passed, frontend 34 passed) and
+`make api-client` (regenerated TS client, no other diff) both clean.
+
+Filed the real finding in `docs/IDEAS.md`: there is still no frontend UI for any of
+this (no invite dialog, no member list, no role editor on `CaseDetailPage`), and
+neither Phase 2 nor Phase 5 in PLAN.md actually names that work, even though Phase 5's
+presence/multiplayer features implicitly assume a case already has more than one
+member. Needs a PLAN.md slot before Phase 5 starts.
+
+Next: gradius to decide where case-membership UI lands in PLAN.md (Phase 2c vs. folded
+into Phase 5), then back to Phase 3 — Temporal worker + transform spec, first
+unchecked box.
+
 ## 2026-07-23 — `/review-changes` pass on `phase-2b-canvas-inspector`
 
 Ran `/review-changes` against `main`. Verdict: approve-with-nits. Re-verified rather

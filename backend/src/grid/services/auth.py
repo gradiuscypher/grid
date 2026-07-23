@@ -28,6 +28,13 @@ async def register_user(db: AsyncSession, *, email: str, display_name: str, pass
     return user
 
 
+async def lookup_user_by_email(db: AsyncSession, *, email: str) -> User:
+    user = await db.scalar(select(User).where(User.email == email))
+    if user is None or not user.is_active:
+        raise NotFoundError(f"no user with email {email!r}")
+    return user
+
+
 async def authenticate_user(db: AsyncSession, *, email: str, password: str) -> User:
     user = await db.scalar(select(User).where(User.email == email))
     if user is None or not user.is_active or not verify_password(password, user.password_hash):
