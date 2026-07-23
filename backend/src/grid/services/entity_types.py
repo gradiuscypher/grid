@@ -4,6 +4,7 @@ from typing import Any
 import jsonschema
 from jsonschema.exceptions import SchemaError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from grid.core.errors import ConflictError, ForbiddenError, NotFoundError, ValidationError
@@ -59,7 +60,11 @@ async def create_entity_type(
         color=color,
     )
     db.add(entity_type)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise ConflictError(f"entity type {name!r} already exists") from exc
     await db.refresh(entity_type)
     return entity_type
 
