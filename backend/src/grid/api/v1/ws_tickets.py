@@ -11,6 +11,6 @@ class WsTicketOut(BaseModel):
     ticket: str
 
 
-@router.post("", response_model=WsTicketOut)
+@router.post("", response_model=WsTicketOut, operation_id="create_ws_ticket")
 async def create_ws_ticket(actor: CurrentActor) -> WsTicketOut:
     return WsTicketOut(ticket=issue_ticket(actor.user.id))

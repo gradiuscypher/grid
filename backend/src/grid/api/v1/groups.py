@@ -37,7 +37,9 @@ class GroupMemberAddRequest(BaseModel):
     node_id: uuid.UUID
 
 
-@router.post("", response_model=GroupOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=GroupOut, status_code=status.HTTP_201_CREATED, operation_id="create_group"
+)
 async def create_group(
     case_id: uuid.UUID, body: GroupCreateRequest, actor: WriteActor, db: DbSession
 ) -> Group:
@@ -51,19 +53,19 @@ async def create_group(
     )
 
 
-@router.get("", response_model=list[GroupOut])
+@router.get("", response_model=list[GroupOut], operation_id="list_groups")
 async def list_groups(case_id: uuid.UUID, actor: CurrentActor, db: DbSession) -> list[Group]:
     return await group_service.list_groups(db, case_id=case_id, user=actor.user)
 
 
-@router.get("/{group_id}", response_model=GroupOut)
+@router.get("/{group_id}", response_model=GroupOut, operation_id="get_group")
 async def get_group(
     case_id: uuid.UUID, group_id: uuid.UUID, actor: CurrentActor, db: DbSession
 ) -> Group:
     return await group_service.get_group(db, case_id=case_id, group_id=group_id, user=actor.user)
 
 
-@router.patch("/{group_id}", response_model=GroupOut)
+@router.patch("/{group_id}", response_model=GroupOut, operation_id="update_group")
 async def update_group(
     case_id: uuid.UUID,
     group_id: uuid.UUID,
@@ -82,14 +84,16 @@ async def update_group(
     )
 
 
-@router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete_group")
 async def delete_group(
     case_id: uuid.UUID, group_id: uuid.UUID, actor: WriteActor, db: DbSession
 ) -> None:
     await group_service.delete_group(db, case_id=case_id, group_id=group_id, user=actor.user)
 
 
-@router.get("/{group_id}/members", response_model=list[uuid.UUID])
+@router.get(
+    "/{group_id}/members", response_model=list[uuid.UUID], operation_id="list_group_members"
+)
 async def list_group_members(
     case_id: uuid.UUID, group_id: uuid.UUID, actor: CurrentActor, db: DbSession
 ) -> list[uuid.UUID]:
@@ -98,7 +102,11 @@ async def list_group_members(
     )
 
 
-@router.post("/{group_id}/members", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/{group_id}/members",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="add_group_member",
+)
 async def add_group_member(
     case_id: uuid.UUID,
     group_id: uuid.UUID,
@@ -111,7 +119,11 @@ async def add_group_member(
     )
 
 
-@router.delete("/{group_id}/members/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{group_id}/members/{node_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="remove_group_member",
+)
 async def remove_group_member(
     case_id: uuid.UUID, group_id: uuid.UUID, node_id: uuid.UUID, actor: WriteActor, db: DbSession
 ) -> None:

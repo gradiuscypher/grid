@@ -38,7 +38,7 @@ class EdgeOut(BaseModel):
     created_by_user_id: uuid.UUID | None
 
 
-@router.post("", response_model=EdgeOut)
+@router.post("", response_model=EdgeOut, operation_id="create_edge")
 async def create_edge(
     case_id: uuid.UUID,
     body: EdgeCreateRequest,
@@ -60,19 +60,19 @@ async def create_edge(
     return edge
 
 
-@router.get("", response_model=list[EdgeOut])
+@router.get("", response_model=list[EdgeOut], operation_id="list_edges")
 async def list_edges(case_id: uuid.UUID, actor: CurrentActor, db: DbSession) -> list[Edge]:
     return await edge_service.list_edges(db, case_id=case_id, user=actor.user)
 
 
-@router.get("/{edge_id}", response_model=EdgeOut)
+@router.get("/{edge_id}", response_model=EdgeOut, operation_id="get_edge")
 async def get_edge(
     case_id: uuid.UUID, edge_id: uuid.UUID, actor: CurrentActor, db: DbSession
 ) -> Edge:
     return await edge_service.get_edge(db, case_id=case_id, edge_id=edge_id, user=actor.user)
 
 
-@router.patch("/{edge_id}", response_model=EdgeOut)
+@router.patch("/{edge_id}", response_model=EdgeOut, operation_id="update_edge")
 async def update_edge(
     case_id: uuid.UUID,
     edge_id: uuid.UUID,
@@ -90,7 +90,7 @@ async def update_edge(
     )
 
 
-@router.delete("/{edge_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{edge_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete_edge")
 async def delete_edge(
     case_id: uuid.UUID, edge_id: uuid.UUID, actor: WriteActor, db: DbSession
 ) -> None:

@@ -36,7 +36,12 @@ class WaypointOut(BaseModel):
     created_by_user_id: uuid.UUID
 
 
-@router.post("", response_model=WaypointOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=WaypointOut,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_waypoint",
+)
 async def create_waypoint(
     case_id: uuid.UUID, body: WaypointCreateRequest, actor: WriteActor, db: DbSession
 ) -> Waypoint:
@@ -51,12 +56,12 @@ async def create_waypoint(
     )
 
 
-@router.get("", response_model=list[WaypointOut])
+@router.get("", response_model=list[WaypointOut], operation_id="list_waypoints")
 async def list_waypoints(case_id: uuid.UUID, actor: CurrentActor, db: DbSession) -> list[Waypoint]:
     return await waypoint_service.list_waypoints(db, case_id=case_id, user=actor.user)
 
 
-@router.get("/{waypoint_id}", response_model=WaypointOut)
+@router.get("/{waypoint_id}", response_model=WaypointOut, operation_id="get_waypoint")
 async def get_waypoint(
     case_id: uuid.UUID, waypoint_id: uuid.UUID, actor: CurrentActor, db: DbSession
 ) -> Waypoint:
@@ -65,7 +70,7 @@ async def get_waypoint(
     )
 
 
-@router.patch("/{waypoint_id}", response_model=WaypointOut)
+@router.patch("/{waypoint_id}", response_model=WaypointOut, operation_id="update_waypoint")
 async def update_waypoint(
     case_id: uuid.UUID,
     waypoint_id: uuid.UUID,
@@ -85,7 +90,9 @@ async def update_waypoint(
     )
 
 
-@router.delete("/{waypoint_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{waypoint_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete_waypoint"
+)
 async def delete_waypoint(
     case_id: uuid.UUID, waypoint_id: uuid.UUID, actor: WriteActor, db: DbSession
 ) -> None:

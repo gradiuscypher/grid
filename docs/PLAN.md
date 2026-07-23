@@ -43,7 +43,7 @@ live event stream. (Schema details: ARCHITECTURE §3–§5.)
       canonical_value), edges, notes, waypoints, groups — provenance mandatory
 - [x] Event log: typed events appended in-transaction by services; `/ws/cases/{id}`
       broadcasting via pg LISTEN/NOTIFY; replay-from-seq on reconnect
-- [ ] OpenAPI polish (operation ids, tags) + `make api-client` generating the TS client
+- [x] OpenAPI polish (operation ids, tags) + `make api-client` generating the TS client
 - [ ] Tests: service unit tests; API integration tests against real Postgres; authz
       matrix test (role × action)
 

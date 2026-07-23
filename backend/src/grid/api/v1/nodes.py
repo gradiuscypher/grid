@@ -43,7 +43,7 @@ class NodeOut(BaseModel):
     created_by_user_id: uuid.UUID | None
 
 
-@router.post("", response_model=NodeOut)
+@router.post("", response_model=NodeOut, operation_id="create_node")
 async def create_node(
     case_id: uuid.UUID,
     body: NodeCreateRequest,
@@ -66,19 +66,19 @@ async def create_node(
     return node
 
 
-@router.get("", response_model=list[NodeOut])
+@router.get("", response_model=list[NodeOut], operation_id="list_nodes")
 async def list_nodes(case_id: uuid.UUID, actor: CurrentActor, db: DbSession) -> list[Node]:
     return await node_service.list_nodes(db, case_id=case_id, user=actor.user)
 
 
-@router.get("/{node_id}", response_model=NodeOut)
+@router.get("/{node_id}", response_model=NodeOut, operation_id="get_node")
 async def get_node(
     case_id: uuid.UUID, node_id: uuid.UUID, actor: CurrentActor, db: DbSession
 ) -> Node:
     return await node_service.get_node(db, case_id=case_id, node_id=node_id, user=actor.user)
 
 
-@router.patch("/{node_id}", response_model=NodeOut)
+@router.patch("/{node_id}", response_model=NodeOut, operation_id="update_node")
 async def update_node(
     case_id: uuid.UUID,
     node_id: uuid.UUID,
@@ -98,7 +98,7 @@ async def update_node(
     )
 
 
-@router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete_node")
 async def delete_node(
     case_id: uuid.UUID, node_id: uuid.UUID, actor: WriteActor, db: DbSession
 ) -> None:

@@ -63,7 +63,12 @@ def _set_session_cookie(response: Response, token: str) -> None:
     )
 
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserOut,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="register",
+)
 async def register(body: RegisterRequest, db: DbSession, response: Response) -> User:
     user = await auth_service.register_user(
         db, email=body.email, display_name=body.display_name, password=body.password
@@ -73,7 +78,7 @@ async def register(body: RegisterRequest, db: DbSession, response: Response) -> 
     return user
 
 
-@router.post("/login", response_model=UserOut)
+@router.post("/login", response_model=UserOut, operation_id="login")
 async def login(body: LoginRequest, db: DbSession, response: Response) -> User:
     user = await auth_service.authenticate_user(db, email=body.email, password=body.password)
     _, token = await auth_service.create_session(db, user=user)
@@ -81,7 +86,7 @@ async def login(body: LoginRequest, db: DbSession, response: Response) -> User:
     return user
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, operation_id="logout")
 async def logout(request: Request, db: DbSession, response: Response) -> None:
     settings = get_settings()
     token = request.cookies.get(settings.session_cookie_name)
@@ -90,12 +95,17 @@ async def logout(request: Request, db: DbSession, response: Response) -> None:
     response.delete_cookie(settings.session_cookie_name)
 
 
-@router.get("/me", response_model=UserOut)
+@router.get("/me", response_model=UserOut, operation_id="get_me")
 async def me(actor: CurrentActor) -> User:
     return actor.user
 
 
-@router.post("/api-keys", response_model=ApiKeyCreatedOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/api-keys",
+    response_model=ApiKeyCreatedOut,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_api_key",
+)
 async def create_api_key(
     body: ApiKeyCreateRequest, actor: WriteActor, db: DbSession
 ) -> ApiKeyCreatedOut:
@@ -113,11 +123,13 @@ async def create_api_key(
     )
 
 
-@router.get("/api-keys", response_model=list[ApiKeyOut])
+@router.get("/api-keys", response_model=list[ApiKeyOut], operation_id="list_api_keys")
 async def list_api_keys(actor: CurrentActor, db: DbSession) -> list[ApiKey]:
     return await auth_service.list_api_keys(db, user=actor.user)
 
 
-@router.delete("/api-keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/api-keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="revoke_api_key"
+)
 async def revoke_api_key(key_id: uuid.UUID, actor: WriteActor, db: DbSession) -> None:
     await auth_service.revoke_api_key(db, user=actor.user, key_id=key_id)

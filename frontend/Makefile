@@ -19,4 +19,4 @@ fmt:
 	pnpm fmt
 
 api-client:
-	@echo "no OpenAPI spec to generate from yet (lands in Phase 1)"
+	pnpm exec openapi-ts

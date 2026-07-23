@@ -42,24 +42,26 @@ class MemberOut(BaseModel):
     role: CaseRole
 
 
-@router.post("", response_model=CaseOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=CaseOut, status_code=status.HTTP_201_CREATED, operation_id="create_case"
+)
 async def create_case(body: CaseCreateRequest, actor: WriteActor, db: DbSession) -> Case:
     return await case_service.create_case(
         db, user=actor.user, name=body.name, description=body.description
     )
 
 
-@router.get("", response_model=list[CaseOut])
+@router.get("", response_model=list[CaseOut], operation_id="list_cases")
 async def list_cases(actor: CurrentActor, db: DbSession) -> list[Case]:
     return await case_service.list_my_cases(db, user=actor.user)
 
 
-@router.get("/{case_id}", response_model=CaseOut)
+@router.get("/{case_id}", response_model=CaseOut, operation_id="get_case")
 async def get_case(case_id: uuid.UUID, actor: CurrentActor, db: DbSession) -> Case:
     return await case_service.get_case(db, case_id=case_id, user=actor.user)
 
 
-@router.patch("/{case_id}", response_model=CaseOut)
+@router.patch("/{case_id}", response_model=CaseOut, operation_id="update_case")
 async def update_case(
     case_id: uuid.UUID, body: CaseUpdateRequest, actor: WriteActor, db: DbSession
 ) -> Case:
@@ -68,17 +70,22 @@ async def update_case(
     )
 
 
-@router.delete("/{case_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{case_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete_case")
 async def delete_case(case_id: uuid.UUID, actor: WriteActor, db: DbSession) -> None:
     await case_service.delete_case(db, case_id=case_id, user=actor.user)
 
 
-@router.get("/{case_id}/members", response_model=list[MemberOut])
+@router.get("/{case_id}/members", response_model=list[MemberOut], operation_id="list_case_members")
 async def list_members(case_id: uuid.UUID, actor: CurrentActor, db: DbSession) -> list[CaseMember]:
     return await case_service.list_members(db, case_id=case_id, user=actor.user)
 
 
-@router.post("/{case_id}/members", response_model=MemberOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{case_id}/members",
+    response_model=MemberOut,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="add_case_member",
+)
 async def add_member(
     case_id: uuid.UUID, body: MemberAddRequest, actor: WriteActor, db: DbSession
 ) -> CaseMember:
@@ -87,7 +94,11 @@ async def add_member(
     )
 
 
-@router.delete("/{case_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{case_id}/members/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="remove_case_member",
+)
 async def remove_member(
     case_id: uuid.UUID, user_id: uuid.UUID, actor: WriteActor, db: DbSession
 ) -> None:

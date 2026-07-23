@@ -31,7 +31,9 @@ class NoteOut(BaseModel):
     created_by_user_id: uuid.UUID
 
 
-@router.post("", response_model=NoteOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=NoteOut, status_code=status.HTTP_201_CREATED, operation_id="create_note"
+)
 async def create_note(
     case_id: uuid.UUID, body: NoteCreateRequest, actor: WriteActor, db: DbSession
 ) -> Note:
@@ -45,7 +47,7 @@ async def create_note(
     )
 
 
-@router.get("", response_model=list[NoteOut])
+@router.get("", response_model=list[NoteOut], operation_id="list_notes")
 async def list_notes(
     case_id: uuid.UUID,
     actor: CurrentActor,
@@ -58,14 +60,14 @@ async def list_notes(
     )
 
 
-@router.get("/{note_id}", response_model=NoteOut)
+@router.get("/{note_id}", response_model=NoteOut, operation_id="get_note")
 async def get_note(
     case_id: uuid.UUID, note_id: uuid.UUID, actor: CurrentActor, db: DbSession
 ) -> Note:
     return await note_service.get_note(db, case_id=case_id, note_id=note_id, user=actor.user)
 
 
-@router.patch("/{note_id}", response_model=NoteOut)
+@router.patch("/{note_id}", response_model=NoteOut, operation_id="update_note")
 async def update_note(
     case_id: uuid.UUID,
     note_id: uuid.UUID,
@@ -78,7 +80,7 @@ async def update_note(
     )
 
 
-@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT, operation_id="delete_note")
 async def delete_note(
     case_id: uuid.UUID, note_id: uuid.UUID, actor: WriteActor, db: DbSession
 ) -> None:
