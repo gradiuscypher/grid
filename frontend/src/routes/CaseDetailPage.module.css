@@ -1,8 +1,9 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  max-width: 720px;
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 0;
 }
 
 .back {
@@ -10,6 +11,11 @@
   font-size: var(--font-size-sm);
   text-decoration: none;
   width: fit-content;
+  flex-shrink: 0;
+}
+
+.headerRow {
+  flex-shrink: 0;
 }
 
 .title {
@@ -19,11 +25,29 @@
 
 .description {
   color: var(--color-text-muted);
+  margin: var(--space-1) 0 0;
 }
 
-.placeholder {
-  border: var(--border-width) dashed var(--color-border-muted);
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.canvasArea {
+  flex: 1;
+  min-width: 0;
+  border: var(--border-width) solid var(--color-border);
+}
+
+.loading {
   padding: var(--space-4);
   color: var(--color-text-muted);
-  text-align: center;
+}
+
+.inspector {
+  width: 320px;
+  flex-shrink: 0;
+  min-height: 0;
 }
