@@ -11,9 +11,9 @@ when the branch is being handed to another agent.
 
 ## Gather the feedback
 
-If a review just ran in this conversation (e.g. via `/review-pr` or `/review-security`),
-use those findings directly — don't re-fetch or re-derive them. Otherwise, get the
-feedback from its source:
+If a review just ran in this conversation (e.g. via `/review-changes` or
+`/review-security`), use those findings directly — don't re-fetch or re-derive them.
+Otherwise, if this is about feedback on an actual GitHub PR, get it from its source:
 
 ```
 gh pr view <n> --json reviews,comments

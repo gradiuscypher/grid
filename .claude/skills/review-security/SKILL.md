@@ -1,6 +1,6 @@
 ---
 name: review-security
-description: Security review of Grid's overall posture — evaluates the whole codebase's security as a system, not just a single diff. Reads the trust model and every security-relevant surface together so findings account for the full structure. Use for "/review-security", a standalone security audit, or when /review-pr flags a new security-sensitive surface.
+description: Security review of Grid's overall posture — evaluates the whole codebase's security as a system, not just a single diff. Reads the trust model and every security-relevant surface together so findings account for the full structure. Use for "/review-security", a standalone security audit, or when /review-changes flags a new security-sensitive surface.
 ---
 
 # review-security
