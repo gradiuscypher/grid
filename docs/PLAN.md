@@ -63,13 +63,13 @@ compiles.
       `ui-monospace, 'JetBrains Mono', monospace`; app must render fine when the
       files are absent; no external font fetches anywhere
 - [x] Auth screens; case list/create; TanStack Router + Query wired to generated client
-- [ ] Canvas (our renderer interface wrapping React Flow): custom node component per
+- [x] Canvas (our renderer interface wrapping React Flow): custom node component per
       entity type (icon, value, type badge, provenance marker), pan/zoom, multi-select,
       create node, connect edges, delete, drag with debounced position persistence
-- [ ] Inspector panel: selected node/edge properties, notes, provenance
-- [ ] WS subscription: remote/own events patch the Query cache; canvas updates live
-- [ ] Command palette (cmdk): navigation + core actions; shortcut registry foundation
-- [ ] Tests: Vitest for stores/components; Playwright e2e: login → create case → build
+- [x] Inspector panel: selected node/edge properties, notes, provenance
+- [x] WS subscription: remote/own events patch the Query cache; canvas updates live
+- [x] Command palette (cmdk): navigation + core actions; shortcut registry foundation
+- [x] Tests: Vitest for stores/components; Playwright e2e: login → create case → build
       a small graph → reload → intact
 
 **Exit criteria:** two browser windows on one case see each other's edits live; e2e

@@ -5,6 +5,89 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — Phase 2b: canvas, inspector, live sync, command palette — Phase 2 complete
+
+Branch `phase-2b-canvas-inspector`, no PR yet. Completed the four checkboxes left
+from Phase 2: canvas, inspector, WS live sync, command palette, plus their tests —
+Phase 2 (frontend core) is now fully checked in PLAN.md.
+
+Stopped for one approval before writing code: no icon library is named in
+ARCHITECTURE/PLAN/DECISIONS, and the builtin entity-type seed migration's `icon`
+column already stores literal Lucide slugs (`globe`, `hard-drive`, ...). Asked
+gradius; approved `lucide-react`. `@xyflow/react` and `cmdk` needed no such check —
+both already named in the stack table.
+
+**Built:** `canvas/graphModel.ts` is the ADR-005 renderer-abstraction layer — our own
+node/edge shape and pure translation to/from `@xyflow/react`, so only
+`canvas/GraphCanvas.tsx` touches xyflow directly. `GraphCanvas` keeps a
+Query-cache-driven node/edge array with one carve-out: a node mid-drag keeps its
+local in-flight position through a resync, so another viewer's live edit doesn't
+yank it out from under the dragging user's cursor. Position writes debounce 300ms
+during drag and flush on drop (`canvas/debounce.ts`, hand-rolled, no new
+dependency). `EntityNode` is the custom per-type node (icon, colored left border,
+type badge, provenance marker for anything not `created_via: user`).
+`CreateNodePanel` / `ConnectEdgeDialog` cover create-node and connect-edge (the
+dialog prompts for `relationship` since `src`/`dst`/`relationship` are immutable
+after creation — no fixing a wrong one later). `canvas/Inspector.tsx` +
+`PropertiesEditor` (JSON textarea — builtins ship empty `{"type":"object"}` schemas,
+so there's nothing yet to drive a generated form) + `NotesPanel` cover the
+properties/notes/provenance bullet. `components/CommandPalette.tsx` (cmdk) +
+`state/commandRegistryStore.ts` (`useRegisterCommands`) is the "shortcut registry
+foundation" — route components contribute contextual actions without the palette
+importing every feature module.
+
+**WS live sync:** `events/useCaseEvents.ts` mints a fresh ticket per connect/
+reconnect (30s TTL, single-use — `events/tickets.py`), backs off exponentially, and
+resumes from last-seen `seq`. `events/applyCaseEvent.ts` patches the Query cache:
+thin event payloads (ids only) mean create/update events re-fetch the row, delete
+events already carry enough (including cascaded edge ids) to patch directly with no
+re-fetch.
+
+**Real bug caught only by the e2e test, not by eyeballing it or the unit suite:**
+the "skip re-processing an event I caused myself" check compared `actor_user_id` to
+the viewing tab's own user id. That's wrong for exactly the scenario PLAN's Phase 2
+exit criterion names — the same user with the same case open in two tabs. Tab A's
+own `node.created` event has `actor_user_id` equal to tab B's user id too (same
+account), so tab B silently swallowed a genuine live update from another tab.
+Fixed with `events/selfMutationTracker.ts`: a module-scoped (so, per-tab, since each
+tab is its own JS module instance) map of "ids this tab mutated in the last 5s",
+checked instead of comparing user ids. Wouldn't have found this without writing the
+actual two-tab e2e scenario — a single-tab manual click-through looks identical
+whether the check is right or wrong.
+
+**Also only caught by actually looking at a screenshot:** dark mode's canvas
+Controls widget (zoom/fit/lock buttons) rendered as an unstyled white box — the
+`@xyflow/react` stylesheet ships light-only defaults via CSS custom properties.
+Mapped the ones we use to our existing theme tokens in `GraphCanvas.module.css`;
+they inherit into the library's internal subtree so this was one file, no forked
+stylesheet.
+
+**Verification:** `make lint typecheck test` clean for both stacks (78 backend + 34
+frontend Vitest tests). New Playwright suite (`frontend/e2e/graph.spec.ts`, wired as
+`make e2e` — needs `make dev` up first, no `webServer` entry in
+`playwright.config.ts` on purpose, it drives the real compose stack) covers: login →
+create case → build a graph → reload → intact; drag persists position (checked via
+the actual API response rather than pixel comparison, since `fitView` legitimately
+repositions the viewport on each load); and two tabs on one case seeing a live
+update with no reload — the scenario that caught the self-echo bug above. Screenshot
+pass in both themes (register → create case → add two nodes → inspector → command
+palette → dark mode) caught the Controls theming bug above.
+
+Surprises: the frontend Docker image's named `node_modules` volume (same issue as
+Phase 2a) didn't pick up the new deps (`@xyflow/react`, `cmdk`, `lucide-react`,
+`@playwright/test`) from a host-side `pnpm add` — this time went straight for the
+faster path identified last session (stop frontend, remove its container +
+`node_modules` volume, `up -d --build frontend`) instead of the `pnpm install`-inside-
+container route that went sideways before.
+
+Left running: `make dev` is still up for gradius to poke at directly; `make down` to
+stop it.
+
+Next: Phase 3 — transforms & Temporal. First unchecked box is "Temporal worker
+wiring (real entrypoint), `RunTransformWorkflow`: resolve creds → invoke → merge via
+services (dedup, provenance, transform_run linkage) — retries/timeouts as Temporal
+policies."
+
 ## 2026-07-23 — `/review-changes` pass on `phase-2a-shell-auth`
 
 Ran `/review-changes` against `main` on the Phase 2a branch (no PR yet). Verdict was
