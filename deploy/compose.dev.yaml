@@ -1,0 +1,100 @@
+name: grid-dev
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-grid}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-grid}
+      POSTGRES_DB: ${POSTGRES_DB:-grid}
+    ports:
+      - "5432:5432"
+    volumes:
+      - grid-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-grid}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    restart: unless-stopped
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-grid}
+      POSTGRES_PWD: ${POSTGRES_PASSWORD:-grid}
+      POSTGRES_SEEDS: db
+    ports:
+      - "7233:7233"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    restart: unless-stopped
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:5173
+    ports:
+      - "8080:8080"
+    depends_on:
+      - temporal
+
+  api:
+    build:
+      context: ./backend
+      target: dev
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-grid}:${POSTGRES_PASSWORD:-grid}@db:5432/${POSTGRES_DB:-grid}
+      TEMPORAL_ADDRESS: temporal:7233
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - grid-backend-venv:/app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      target: dev
+    restart: unless-stopped
+    command: ["uv", "run", "python", "-m", "grid.workflows.worker"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-grid}:${POSTGRES_PASSWORD:-grid}@db:5432/${POSTGRES_DB:-grid}
+      TEMPORAL_ADDRESS: temporal:7233
+    volumes:
+      - ./backend:/app
+      - grid-backend-venv:/app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    restart: unless-stopped
+    environment:
+      GRID_API_PROXY_TARGET: http://api:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - grid-frontend-node-modules:/app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  grid-db-data:
+  grid-backend-venv:
+  grid-frontend-node-modules:

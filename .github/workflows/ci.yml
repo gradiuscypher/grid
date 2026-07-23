@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          python-version: "3.13"
+      - name: setup
+        run: make setup
+        working-directory: backend
+      - name: lint
+        run: make lint
+        working-directory: backend
+      - name: typecheck
+        run: make typecheck
+        working-directory: backend
+      - name: test
+        run: make test
+        working-directory: backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "10.34.5"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: setup
+        run: make setup
+        working-directory: frontend
+      - name: lint
+        run: make lint
+        working-directory: frontend
+      - name: typecheck
+        run: make typecheck
+        working-directory: frontend
+      - name: test
+        run: make test
+        working-directory: frontend
+      - name: build
+        run: pnpm build
+        working-directory: frontend
