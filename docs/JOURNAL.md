@@ -5,6 +5,30 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — `/review-changes` pass on `phase-2b-canvas-inspector`
+
+Ran `/review-changes` against `main`. Verdict: approve-with-nits. Re-verified rather
+than trusted the prior session's claims: `make lint typecheck test` clean (78 backend +
+34 frontend, matching the Phase 2b entry below), plus `make e2e` against the live
+compose stack — all 3 Playwright scenarios green. Independently traced the WS replay
+contract (`since=0` on first connect against `seq > since` with a `seq` `Identity()`
+column starting at 1) — confirmed no off-by-one on a brand-new subscription.
+
+Three nits, triaged:
+- **Fixed:** `lucide-react` (approved by gradius last session per the Phase 2b entry
+  below) was never added to CLAUDE.md's stack table — `@xyflow/react` and `cmdk` are
+  listed there but the icon library wasn't, so the approval had no durable record. Added
+  it to the Frontend row.
+- **Deferred to the existing Phase 6 "Perf pass" PLAN item:** `seenSeqsRef`
+  (`events/useCaseEvents.ts`) and the per-node debounce/drag-tracking maps in
+  `canvas/GraphCanvas.tsx` grow unbounded for the life of a case-detail mount. Harmless
+  at MVP scale; Phase 6 already covers profiling large/long-lived sessions, so fixing
+  now would be scope creep on a phase already marked complete.
+- **Deferred, not tracked further:** two users creating a node in the same instant can
+  land both on the same grid cell (`caseDetail.tsx`'s placement uses `nodes.length` as
+  index). Cosmetic only — no data corruption, resolves itself once either node is
+  dragged — doesn't rise to an IDEAS.md-worthy item.
+
 ## 2026-07-23 — Phase 2b: canvas, inspector, live sync, command palette — Phase 2 complete
 
 Branch `phase-2b-canvas-inspector`, no PR yet. Completed the four checkboxes left

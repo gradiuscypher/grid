@@ -87,7 +87,7 @@ mid-phase should leave behind commits, not a pile of unstaged files.
 | Backend | Python 3.13, FastAPI, SQLAlchemy 2.0 (typed) + Alembic, Postgres 17 + pgvector |
 | Background work | Temporal (temporalio SDK) — all async/durable work, no other queues |
 | Backend tooling | uv, ruff, ty, pytest |
-| Frontend | Vite, React 19, TypeScript strict, TanStack Router + Query, Zustand, @xyflow/react, cmdk |
+| Frontend | Vite, React 19, TypeScript strict, TanStack Router + Query, Zustand, @xyflow/react, cmdk, lucide-react |
 | Frontend tooling | pnpm, Biome, Vitest, Playwright |
 | LLM layer | pydantic-ai (provisional — ADR-008), model slots, MCP server |
 | Infra | Docker Compose (dev & small prod), Make for all tasks, GitHub Actions CI |
