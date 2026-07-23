@@ -1,4 +1,4 @@
-.PHONY: setup dev test lint typecheck fmt api-client
+.PHONY: setup dev test e2e lint typecheck fmt api-client
 
 setup:
 	pnpm install
@@ -8,6 +8,11 @@ dev:
 
 test:
 	pnpm test
+
+# Needs the real compose stack up (`make dev` from the repo root) — exercises
+# the actual frontend + API + Postgres, not a standalone preview build.
+e2e:
+	pnpm e2e
 
 lint:
 	pnpm lint

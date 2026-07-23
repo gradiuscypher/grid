@@ -1,7 +1,7 @@
 # --project-directory makes compose read .env from the repo root (default would be deploy/)
 COMPOSE = docker compose -f deploy/compose.dev.yaml --project-directory .
 
-.PHONY: setup dev down test lint typecheck fmt migrate api-client
+.PHONY: setup dev down test e2e lint typecheck fmt migrate api-client
 
 setup:
 	$(MAKE) -C backend setup
@@ -16,6 +16,10 @@ down:
 test:
 	$(MAKE) -C backend test
 	$(MAKE) -C frontend test
+
+# Needs `make dev` running first — exercises the real compose stack.
+e2e:
+	$(MAKE) -C frontend e2e
 
 lint:
 	$(MAKE) -C backend lint

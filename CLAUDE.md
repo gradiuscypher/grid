@@ -127,6 +127,12 @@ current as targets land (Phase 0+):**
 - `make api-client` — dumps the backend's OpenAPI schema (`backend/openapi-schema`, no
   running server needed) then regenerates `frontend/src/api/generated/` via
   `@hey-api/openapi-ts`. Treat that output as a build artifact — never hand-edit it.
+- `make e2e` — Playwright e2e suite (`frontend/e2e/`) against the real compose stack.
+  **Needs `make dev` already running** (frontend on :5173, API on :8000) — unlike
+  `test`/`lint`/`typecheck`/`fmt`, this isn't a native-no-Docker target. First run
+  needs browser binaries: `cd frontend && pnpm exec playwright install chromium`
+  (plus `sudo pnpm exec playwright install-deps chromium` once per host for headless
+  Chromium's shared libs).
 
 ## Conventions (non-negotiable)
 
