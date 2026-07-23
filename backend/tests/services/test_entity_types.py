@@ -63,8 +63,13 @@ async def test_create_entity_type_rejects_invalid_schema(db_session: AsyncSessio
 
 
 async def test_builtin_entity_type_cannot_be_modified_or_deleted(db_session: AsyncSession) -> None:
+    # Not "domain"/etc — conftest's `test_engine` pre-seeds the real ARCHITECTURE §3
+    # builtins, so this uses a name that can't collide with them.
     builtin = EntityType(
-        name="domain", display_name="Domain", is_builtin=True, json_schema={"type": "object"}
+        name="test_widget",
+        display_name="Test Widget",
+        is_builtin=True,
+        json_schema={"type": "object"},
     )
     db_session.add(builtin)
     await db_session.commit()

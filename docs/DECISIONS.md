@@ -107,3 +107,19 @@ code.
 **Consequences:** No `tenant_id` anywhere. Cross-graph sharing ("codex") is a
 deliberate, explicit federation feature between cases within a stack (and later
 between stacks), never an accident of shared tables.
+
+## ADR-011: WebSocket auth via short-lived REST-minted tickets — 2026-07-23 — Accepted (gradius)
+
+**Context:** `/ws/cases/{id}` (Phase 1b, ARCHITECTURE §4's event broadcast) needs the
+same trust level as the rest of the API, but the app's CSRF mitigation (ADR-009: a
+custom header on cookie requests) can't ride along on a WebSocket handshake — browsers
+don't let JS attach custom headers to it. ARCHITECTURE §5 didn't specify a WS auth
+mechanism. Alternative considered: Origin-header validation on the handshake.
+**Decision:** A short-lived (30s TTL), single-use, cryptographically random ticket
+(`POST /api/v1/ws-tickets`, itself cookie+CSRF-header authenticated) that the client
+passes as a `ticket` query param on the WS URL. `redeem_ticket` consumes it exactly
+once and resolves to the minting user's id. Tickets live in an in-process dict
+(`events/tickets.py`), matching the current single-API-process compose topology.
+**Consequences:** WS auth reuses the existing session/CSRF trust chain instead of a
+parallel Origin-allowlist mechanism. The in-memory ticket store means this breaks if
+the API ever runs multiple replicas — would need to move to Postgres or Redis first.

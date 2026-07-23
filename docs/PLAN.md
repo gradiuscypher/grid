@@ -39,12 +39,12 @@ live event stream. (Schema details: ARCHITECTURE §3–§5.)
 - [x] Entity type registry: seed builtins (domain, hostname, ipv4, ipv6, cidr, asn,
       url, email, username, person, organization, hash, note); CRUD for custom types
       with JSON Schema property validation
-- [ ] Service layer + REST CRUD: cases, nodes (canonicalization + dedup on
+- [x] Service layer + REST CRUD: cases, nodes (canonicalization + dedup on
       canonical_value), edges, notes, waypoints, groups — provenance mandatory
-- [ ] Event log: typed events appended in-transaction by services; `/ws/cases/{id}`
+- [x] Event log: typed events appended in-transaction by services; `/ws/cases/{id}`
       broadcasting via pg LISTEN/NOTIFY; replay-from-seq on reconnect
-- [ ] OpenAPI polish (operation ids, tags) + `make api-client` generating the TS client
-- [ ] Tests: service unit tests; API integration tests against real Postgres; authz
+- [x] OpenAPI polish (operation ids, tags) + `make api-client` generating the TS client
+- [x] Tests: service unit tests; API integration tests against real Postgres; authz
       matrix test (role × action)
 
 **Exit criteria:** curl-only demo works: register → create case → add nodes/edges →

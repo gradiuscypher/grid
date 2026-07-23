@@ -38,19 +38,24 @@ class EntityTypeUpdateRequest(BaseModel):
     color: str | None = None
 
 
-@router.get("", response_model=list[EntityTypeOut])
+@router.get("", response_model=list[EntityTypeOut], operation_id="list_entity_types")
 async def list_entity_types(actor: CurrentActor, db: DbSession) -> list[EntityType]:
     return await entity_type_service.list_entity_types(db)
 
 
-@router.get("/{entity_type_id}", response_model=EntityTypeOut)
+@router.get("/{entity_type_id}", response_model=EntityTypeOut, operation_id="get_entity_type")
 async def get_entity_type(
     entity_type_id: uuid.UUID, actor: CurrentActor, db: DbSession
 ) -> EntityType:
     return await entity_type_service.get_entity_type(db, entity_type_id=entity_type_id)
 
 
-@router.post("", response_model=EntityTypeOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=EntityTypeOut,
+    status_code=status.HTTP_201_CREATED,
+    operation_id="create_entity_type",
+)
 async def create_entity_type(
     body: EntityTypeCreateRequest, actor: WriteActor, db: DbSession
 ) -> EntityType:
@@ -64,7 +69,7 @@ async def create_entity_type(
     )
 
 
-@router.patch("/{entity_type_id}", response_model=EntityTypeOut)
+@router.patch("/{entity_type_id}", response_model=EntityTypeOut, operation_id="update_entity_type")
 async def update_entity_type(
     entity_type_id: uuid.UUID, body: EntityTypeUpdateRequest, actor: WriteActor, db: DbSession
 ) -> EntityType:
@@ -78,6 +83,10 @@ async def update_entity_type(
     )
 
 
-@router.delete("/{entity_type_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{entity_type_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_entity_type",
+)
 async def delete_entity_type(entity_type_id: uuid.UUID, actor: WriteActor, db: DbSession) -> None:
     await entity_type_service.delete_entity_type(db, entity_type_id=entity_type_id)

@@ -124,7 +124,9 @@ current as targets land (Phase 0+):**
   `<db>_test` sibling database, never the dev DB.
 - `make migrate` — apply Alembic migrations (backend: `alembic upgrade head`,
   `src/grid/db/alembic/`); same Postgres requirement as `test`
-- `make api-client` — regenerate the typed TS client from OpenAPI (stub until Phase 1)
+- `make api-client` — dumps the backend's OpenAPI schema (`backend/openapi-schema`, no
+  running server needed) then regenerates `frontend/src/api/generated/` via
+  `@hey-api/openapi-ts`. Treat that output as a build artifact — never hand-edit it.
 
 ## Conventions (non-negotiable)
 

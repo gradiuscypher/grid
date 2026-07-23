@@ -12,7 +12,15 @@ from grid.db.models.provenance import CreatedVia
 
 class Event(UUIDPkMixin, Base):
     """Append-only mutation log. `seq` is a globally monotonic identity column;
-    clients replay a case's history filtered to `case_id` and ordered by `seq`."""
+    clients replay a case's history filtered to `case_id` and ordered by `seq`.
+
+    `seq` values are assigned at INSERT but only become visible at COMMIT, so
+    under concurrent writers a later-assigned `seq` can commit before an
+    earlier one — a `WHERE seq > :since ORDER BY seq` replay racing a commit
+    could in theory advance past a lower `seq` that lands moments later.
+    Not an issue at today's single-writer-per-case scale; worth revisiting
+    (e.g. a short commit-visibility delay before treating a seq as "caught up")
+    if concurrent writes to the same case become common."""
 
     __tablename__ = "events"
 

@@ -20,7 +20,9 @@ async def _make_case(db_session: AsyncSession, user: User) -> Case:
 
 
 async def _make_entity_type(db_session: AsyncSession) -> EntityType:
-    et = EntityType(name="domain", display_name="Domain", is_builtin=True, json_schema={})
+    # Deliberately not "domain"/etc — conftest's `test_engine` pre-seeds the real
+    # ARCHITECTURE §3 builtins, so this uses a name that can't collide with them.
+    et = EntityType(name="test_widget", display_name="Test Widget", is_builtin=True, json_schema={})
     db_session.add(et)
     await db_session.flush()
     return et

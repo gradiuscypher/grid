@@ -5,6 +5,150 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — PR review pass: merge #2 and #3, Phase 1 fully in `main`
+
+Worked the review→fix→merge loop on both open Phase 1 PRs (Opus for review, Sonnet
+for fixes, per gradius's process). Both are now merged into `main`; Phase 1 is
+complete on `main`, not just on phase branches.
+
+**PR #2 (Phase 1a):** approve-with-nits from review. Fixed before merge: `add_member`
+could let the sole owner demote themselves (only `remove_member` had a last-owner
+guard — now both share `_count_owners`); FK/unique-constraint violations
+(`add_member` with an unknown user, concurrent duplicate register/entity-type create)
+surfaced as raw 500s instead of clean 404/409 — now caught and translated;
+`key_prefix` now derives from the full `grid_<token>` string so it matches what the
+user sees; session auth now rejects deactivated users like the API-key path already
+did. Merging also picked up `main`'s `chore/pr-review-skills` PR (landed while 1a was
+in flight) — resolved the `docs/JOURNAL.md` conflict by keeping both sessions'
+entries, newest first.
+
+**PR #3 (Phase 1b):** was stacked on `phase-1a-models-auth`; retargeted its base to
+`main` after #2 merged and merged `main` into the branch — conflicts were mechanical
+(cases.py/test_cases.py: both branches touched `add_member`/tests independently,
+resolved by keeping both features) except one real bug the merge surfaced:
+`record_event`'s eager `db.flush()` raised the FK `IntegrityError` *before* reaching
+the `try/except` added around `add_member`'s `commit()`, so the guard never fired —
+fixed by wrapping `record_event` + `commit` together, not just `commit`.
+
+Review of #3 (approve-with-nits) found a real correctness gap: `_replay` read the
+backlog, *then* `websocket.accept()` + `connection_manager.subscribe()` — any event
+committed in that window was neither in the backlog nor delivered live, silently
+dropped for the connection's lifetime. Fixed by subscribing right after `accept()`,
+before the backlog read, so the only failure mode left is a same-event double
+delivery (backlog + live) in that window, which callers already need to tolerate via
+seq-based dedup for reconnects. Added ADR-011 for the WS ticket auth mechanism
+(should have shipped with #3 — it's a new trust boundary and CLAUDE.md wants ADRs for
+those). Declined one review suggestion: shortening the WS connection's DB-session
+lifetime by bypassing the `Depends(get_session)` dependency — tests override that
+exact dependency for the disposable `_test` database (`tests/conftest.py`), and
+calling the session-maker directly instead would've silently pointed WS DB access at
+the real dev database the moment anyone wrote a WS test. Left it as a documented
+known limitation instead of risking that. Also declined adding new WS
+replay/authz tests this session — Starlette's sync `TestClient.websocket_connect`
+would run the app in a different thread's event loop than the async `db_session`
+fixture, which is exactly the event-loop-binding risk 1b's session flagged for live
+broadcast; doing this safely likely wants `httpx-ws` or similar, which is a new
+dependency (CLAUDE.md: stop-and-ask), not a same-session call.
+
+**Surprises:** the record_event/IntegrityError interaction above — "wrap the commit"
+isn't enough once a helper does its own flush; the whole write path needs the guard.
+
+Next: Phase 2 — frontend core (canvas & CRUD), starting with the theme system
+(CSS-variable tokens, industrial default, light + dark, switcher) per PLAN.md.
+
+## 2026-07-23 — Phase 1b: CRUD, event log/WS, OpenAPI client, authz matrix — Phase 1 complete
+
+Picked up right where 1a left off, on `phase-1b-crud-events` (stacked on
+`phase-1a-models-auth`, which was still awaiting review — opened PR #2 for it
+at the start of this session; per gradius's call, I open PRs and they merge,
+never the reverse). Finished all four remaining Phase 1 checkboxes in one
+session, committing after each.
+
+**Landed:**
+- Full service-layer CRUD for nodes, edges, notes, waypoints, groups, plus
+  filling out cases (update/delete). Nodes/edges are dedup-idempotent on
+  create (repeat create with the same canonical value returns the existing
+  row, matching ARCHITECTURE's "dedup is structural"); canonicalization rules
+  per builtin entity type live in `services/canonicalize.py`. Node/edge
+  identity fields (entity_type, value) are immutable after creation. Deleting
+  a node cascades its edges and group memberships by hand in the service
+  layer — the DB has no FK cascade anywhere, by design (service layer is the
+  only writer), so `delete_case` also manually clears every child table in
+  FK-safe order.
+- Event log + realtime: every mutation across all these services now appends
+  a typed event row and queues a `pg_notify` in the same transaction
+  (`events/service.py`). A background task (`events/listener.py`, started in
+  `main.py`'s new lifespan) holds one LISTEN connection per process and fans
+  notified rows out to in-process WS subscribers (`events/manager.py`).
+  `/ws/cases/{id}` replays the backlog since a client-supplied `seq`, then
+  streams live.
+- **WS auth needed a real decision, not just an implementation.** ARCHITECTURE
+  doesn't cover it, and the existing cookie+custom-header pattern doesn't
+  carry over — browsers can't attach a custom header to a WS handshake. Asked
+  gradius; went with short-lived, single-use REST-minted tickets
+  (`POST /api/v1/ws-tickets`, `events/tickets.py`) over Origin-header
+  validation. In-memory by design, matching the single-API-process compose
+  topology — would need to move to Postgres if the API ever runs multiple
+  replicas.
+- OpenAPI polish: every route now has an explicit `operation_id` (previously
+  FastAPI's verbose auto-generated ones). `make api-client` does real work
+  now — `backend openapi-schema` dumps `app.openapi()` without needing a
+  running server, `@hey-api/openapi-ts` generates a typed fetch client into
+  `frontend/src/api/generated/` (committed; the intermediate `openapi.json`
+  dump is gitignored and regenerated each run).
+- Comprehensive role×action authz matrix test
+  (`tests/api/test_authz_matrix.py`): for every case-scoped action, checks
+  that the role just below its documented minimum is forbidden and the
+  minimum role itself succeeds. 75 backend tests total now, all real
+  Postgres.
+
+**Surprises / notes for next session:**
+- **The live-broadcast path can't be exercised by the existing pytest
+  harness**, and that took real debugging time to nail down (not a code bug —
+  I initially thought the LISTEN/NOTIFY pipeline itself was broken, added
+  debug tracing, and eventually proved via a manual dev-stack walkthrough that
+  it works correctly end-to-end). The per-test transaction fixture never
+  truly commits (rolled back at teardown), so `pg_notify` never actually
+  fires; and mixing httpx's async client with Starlette's thread-portal WS
+  test client risks binding a DB connection to the wrong event loop. Automated
+  coverage here is ticket issue/redeem/expiry and the `/ws-tickets` REST
+  endpoint; live broadcast is verified manually against the dev compose stack
+  (transcript below) — flagging this gap explicitly rather than leaving it
+  silently under-tested. Worth reconsidering if `httpx-ws` (or similar) is
+  ever added as a dependency.
+- `@hey-api/client-fetch` is deprecated as a standalone package — bundled
+  directly into `@hey-api/openapi-ts` now. Reference it by plugin name in
+  `openapi-ts.config.ts`, don't install it separately (I did, then removed it
+  once `pnpm add` warned about it).
+- Two pre-existing tests (`test_models.py`, `test_entity_types.py`) created
+  their own ad hoc `EntityType(name="domain", ...)` rows for fixtures; once
+  `conftest.py` started seeding the real ARCHITECTURE §3 builtins (needed so
+  my new tests could reference "domain"/"ipv4" by name like production code
+  does), those collided on the unique name constraint. Renamed to
+  `test_widget`, a name that can't collide with real builtins.
+- Still open from 1a, unchanged: API key scope is a single `read_only: bool`,
+  and there's no admin/superuser concept gating entity-type management.
+  Neither came up as blocking this session; still flagging for the architect.
+
+**Exit criteria demonstrated** (curl + WS transcript, not just asserted):
+register → create case → mint API key → create a domain node → **repeat
+create with different casing returns HTTP 200 with the same node id** (dedup)
+→ create an IPv4 node → connect a second WS client with a minted ticket, which
+immediately replays the case/node backlog → from a separate terminal, create
+an edge and a third node → **the live WS client receives `edge.created` and
+`node.created` events in real time**, no polling. `test_authz_matrix.py`'s 13
+tests pass (role×action boundaries for cases/nodes/edges/notes/waypoints/
+groups). `make api-client` generates a clean TypeScript client from a cold
+start (deleted `openapi.json` and `src/api/generated/` first, regenerated
+both). `make lint typecheck test` clean on both stacks, 75 backend tests +
+2 frontend tests.
+
+Next: Phase 2 — frontend core (canvas & CRUD). First unchecked box is "Theme
+system: CSS-variable tokens, industrial default, light + dark, theme
+switcher." PR #2 (Phase 1a) is still open pending gradius's review; this
+session's work should go up as its own PR against `main` (or rebased onto
+main once #2 merges — gradius's call on sequencing).
+
 ## 2026-07-23 — Phase 1a: settings, models, Alembic, auth, entity types
 
 Phase 1 is too large for one session (7 checkboxes: schema, auth, entity types,

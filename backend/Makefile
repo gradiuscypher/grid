@@ -1,4 +1,4 @@
-.PHONY: setup dev worker test lint typecheck fmt migrate
+.PHONY: setup dev worker test lint typecheck fmt migrate openapi-schema
 
 setup:
 	uv sync
@@ -25,3 +25,6 @@ fmt:
 
 migrate:
 	uv run alembic upgrade head
+
+openapi-schema:
+	uv run python -c "import json; from grid.main import app; print(json.dumps(app.openapi()))" > ../frontend/openapi.json

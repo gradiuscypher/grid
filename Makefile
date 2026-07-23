@@ -33,4 +33,5 @@ migrate:
 	$(MAKE) -C backend migrate
 
 api-client:
+	$(MAKE) -C backend openapi-schema
 	$(MAKE) -C frontend api-client

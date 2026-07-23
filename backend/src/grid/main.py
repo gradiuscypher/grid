@@ -1,10 +1,22 @@
+import asyncio
+import contextlib
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from grid.api.v1.auth import router as auth_router
 from grid.api.v1.cases import router as cases_router
+from grid.api.v1.edges import router as edges_router
 from grid.api.v1.entity_types import router as entity_types_router
+from grid.api.v1.groups import router as groups_router
 from grid.api.v1.health import router as health_router
+from grid.api.v1.nodes import router as nodes_router
+from grid.api.v1.notes import router as notes_router
+from grid.api.v1.waypoints import router as waypoints_router
+from grid.api.v1.ws_tickets import router as ws_tickets_router
+from grid.api.ws import router as ws_router
 from grid.core.errors import (
     ConflictError,
     ForbiddenError,
@@ -12,13 +24,33 @@ from grid.core.errors import (
     UnauthorizedError,
     ValidationError,
 )
+from grid.events.listener import run_listener
 
-app = FastAPI(title="Grid API")
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    listener_task = asyncio.create_task(run_listener())
+    try:
+        yield
+    finally:
+        listener_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await listener_task
+
+
+app = FastAPI(title="Grid API", lifespan=_lifespan)
 
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(cases_router, prefix="/api/v1")
 app.include_router(entity_types_router, prefix="/api/v1")
+app.include_router(nodes_router, prefix="/api/v1")
+app.include_router(edges_router, prefix="/api/v1")
+app.include_router(notes_router, prefix="/api/v1")
+app.include_router(waypoints_router, prefix="/api/v1")
+app.include_router(groups_router, prefix="/api/v1")
+app.include_router(ws_tickets_router, prefix="/api/v1")
+app.include_router(ws_router)
 
 
 def _as_json(status_code: int, exc: Exception) -> JSONResponse:
