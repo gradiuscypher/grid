@@ -1,4 +1,5 @@
-COMPOSE = docker compose -f deploy/compose.dev.yaml
+# --project-directory makes compose read .env from the repo root (default would be deploy/)
+COMPOSE = docker compose -f deploy/compose.dev.yaml --project-directory .
 
 .PHONY: setup dev down test lint typecheck fmt migrate api-client
 

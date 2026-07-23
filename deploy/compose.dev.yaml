@@ -46,7 +46,7 @@ services:
 
   api:
     build:
-      context: ../backend
+      context: ./backend
       target: dev
     restart: unless-stopped
     environment:
@@ -55,7 +55,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ../backend:/app
+      - ./backend:/app
       - grid-backend-venv:/app/.venv
     depends_on:
       db:
@@ -63,7 +63,7 @@ services:
 
   worker:
     build:
-      context: ../backend
+      context: ./backend
       target: dev
     restart: unless-stopped
     command: ["uv", "run", "python", "-m", "grid.workflows.worker"]
@@ -71,7 +71,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-grid}:${POSTGRES_PASSWORD:-grid}@db:5432/${POSTGRES_DB:-grid}
       TEMPORAL_ADDRESS: temporal:7233
     volumes:
-      - ../backend:/app
+      - ./backend:/app
       - grid-backend-venv:/app/.venv
     depends_on:
       db:
@@ -81,7 +81,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
       target: dev
     restart: unless-stopped
     environment:
@@ -89,7 +89,7 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ../frontend:/app
+      - ./frontend:/app
       - grid-frontend-node-modules:/app/node_modules
     depends_on:
       - api
