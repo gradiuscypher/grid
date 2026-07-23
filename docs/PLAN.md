@@ -34,7 +34,7 @@ OK; Temporal UI reachable; `make test lint typecheck` clean; CI green.
 live event stream. (Schema details: ARCHITECTURE §3–§5.)
 
 - [x] Settings via pydantic-settings; SQLAlchemy 2.0 typed models; Alembic baseline
-- [ ] Auth: users, argon2id, session cookies, hashed+scoped API keys; auth deps;
+- [x] Auth: users, argon2id, session cookies, hashed+scoped API keys; auth deps;
       case_members RBAC (owner/editor/viewer) enforced in services
 - [ ] Entity type registry: seed builtins (domain, hostname, ipv4, ipv6, cidr, asn,
       url, email, username, person, organization, hash, note); CRUD for custom types
