@@ -8,6 +8,22 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: grid
+          POSTGRES_PASSWORD: grid
+          POSTGRES_DB: grid
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U grid"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://grid:grid@localhost:5432/grid
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -22,6 +38,9 @@ jobs:
         working-directory: backend
       - name: typecheck
         run: make typecheck
+        working-directory: backend
+      - name: migrate
+        run: make migrate
         working-directory: backend
       - name: test
         run: make test
