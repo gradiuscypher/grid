@@ -16,3 +16,7 @@ class UnauthorizedError(GridError):
 
 class ConflictError(GridError):
     pass
+
+
+class ValidationError(GridError):
+    pass
