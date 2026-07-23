@@ -44,7 +44,7 @@ live event stream. (Schema details: ARCHITECTURE §3–§5.)
 - [x] Event log: typed events appended in-transaction by services; `/ws/cases/{id}`
       broadcasting via pg LISTEN/NOTIFY; replay-from-seq on reconnect
 - [x] OpenAPI polish (operation ids, tags) + `make api-client` generating the TS client
-- [ ] Tests: service unit tests; API integration tests against real Postgres; authz
+- [x] Tests: service unit tests; API integration tests against real Postgres; authz
       matrix test (role × action)
 
 **Exit criteria:** curl-only demo works: register → create case → add nodes/edges →
