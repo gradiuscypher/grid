@@ -20,6 +20,7 @@ import {
   updateNodeRequest,
 } from '../api/nodes'
 import { removeByIds, upsertById } from '../api/queryCache'
+import { markSelfMutated } from '../events/selfMutationTracker'
 
 /** Node/edge CRUD wired to the case's Query cache. Every mutation patches the
  * cache directly from its response instead of waiting on the WS round trip
@@ -36,6 +37,7 @@ export function useGraphMutations(caseId: string) {
   const createNode = useMutation({
     mutationFn: (body: NodeCreateRequest) => createNodeRequest(caseId, body),
     onSuccess: (node) => {
+      markSelfMutated(node.id)
       queryClient.setQueryData<NodeOut[]>(nodesKey, (current) =>
         current ? upsertById(current, node) : current,
       )
@@ -46,6 +48,7 @@ export function useGraphMutations(caseId: string) {
     mutationFn: ({ nodeId, body }: { nodeId: string; body: NodeUpdateRequest }) =>
       updateNodeRequest(caseId, nodeId, body),
     onSuccess: (node) => {
+      markSelfMutated(node.id)
       queryClient.setQueryData<NodeOut[]>(nodesKey, (current) =>
         current ? upsertById(current, node) : current,
       )
@@ -69,6 +72,7 @@ export function useGraphMutations(caseId: string) {
   const createEdge = useMutation({
     mutationFn: (body: EdgeCreateRequest) => createEdgeRequest(caseId, body),
     onSuccess: (edge) => {
+      markSelfMutated(edge.id)
       queryClient.setQueryData<EdgeOut[]>(edgesKey, (current) =>
         current ? upsertById(current, edge) : current,
       )
@@ -79,6 +83,7 @@ export function useGraphMutations(caseId: string) {
     mutationFn: ({ edgeId, body }: { edgeId: string; body: EdgeUpdateRequest }) =>
       updateEdgeRequest(caseId, edgeId, body),
     onSuccess: (edge) => {
+      markSelfMutated(edge.id)
       queryClient.setQueryData<EdgeOut[]>(edgesKey, (current) =>
         current ? upsertById(current, edge) : current,
       )

@@ -4,29 +4,29 @@ import type { EdgeOut, NodeOut } from '../api/generated'
 import { getEdge, getNode } from '../api/generated'
 import { nodesQueryOptions } from '../api/nodes'
 import { removeByIds, upsertById } from '../api/queryCache'
+import { wasSelfMutated } from './selfMutationTracker'
 import type { CaseEvent } from './types'
 
 /** Patches the TanStack Query cache from one live/replayed case event. Event
  * payloads are intentionally thin (ids only — see `events/service.py`), so
  * create/update events re-fetch the affected row; delete events already carry
- * everything needed to remove it. Skips events this client caused itself: our
- * own mutations already patch the cache from the mutation response, so
- * re-fetching would just be a redundant round trip. */
+ * everything needed to remove it. Skips create/update events for ids this
+ * *tab* just mutated itself: the mutation's own onSuccess already patched the
+ * cache from the response, so re-fetching would just be a redundant round
+ * trip (see selfMutationTracker.ts for why this isn't done by actor_user_id). */
 export async function applyCaseEvent(
   queryClient: QueryClient,
   caseId: string,
   event: CaseEvent,
-  currentUserId: string | undefined,
 ): Promise<void> {
-  const isSelf = currentUserId !== undefined && event.actor_user_id === currentUserId
   const nodesKey = nodesQueryOptions(caseId).queryKey
   const edgesKey = edgesQueryOptions(caseId).queryKey
 
   switch (event.type) {
     case 'node.created':
     case 'node.updated': {
-      if (isSelf) return
       const nodeId = String(event.payload.node_id)
+      if (wasSelfMutated(nodeId)) return
       const { data } = await getNode({ path: { case_id: caseId, node_id: nodeId } })
       if (!data) return
       queryClient.setQueryData<NodeOut[]>(nodesKey, (current) =>
@@ -53,8 +53,8 @@ export async function applyCaseEvent(
     }
     case 'edge.created':
     case 'edge.updated': {
-      if (isSelf) return
       const edgeId = String(event.payload.edge_id)
+      if (wasSelfMutated(edgeId)) return
       const { data } = await getEdge({ path: { case_id: caseId, edge_id: edgeId } })
       if (!data) return
       queryClient.setQueryData<EdgeOut[]>(edgesKey, (current) =>
@@ -70,7 +70,8 @@ export async function applyCaseEvent(
       return
     }
     case 'note.created': {
-      if (isSelf) return
+      const noteId = String(event.payload.note_id)
+      if (wasSelfMutated(noteId)) return
       const targetType = event.payload.target_type
       const targetId = event.payload.target_id
       if (typeof targetType === 'string' && typeof targetId === 'string') {
@@ -82,7 +83,8 @@ export async function applyCaseEvent(
     }
     case 'note.updated':
     case 'note.deleted': {
-      if (isSelf) return
+      const noteId = String(event.payload.note_id)
+      if (wasSelfMutated(noteId)) return
       // Thin payload has no target scope — invalidate every open notes query
       // for this case rather than guessing which target it belonged to.
       await queryClient.invalidateQueries({

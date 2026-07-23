@@ -41,7 +41,7 @@ function CaseDetailPage() {
   const edgesQuery = useQuery(edgesQueryOptions(caseId))
   const entityTypesQuery = useQuery(entityTypesQueryOptions)
 
-  useCaseEvents(caseId, meQuery.data?.id)
+  useCaseEvents(caseId)
 
   const selectedNodeIds = useCanvasSelectionStore((state) => state.selectedNodeIds)
   const selectedEdgeIds = useCanvasSelectionStore((state) => state.selectedEdgeIds)

@@ -17,7 +17,7 @@ function wsUrl(caseId: string, ticket: string, since: number): string {
  * (`events/tickets.py`), so a fresh one is minted on every connect/reconnect —
  * never reused across attempts. Reconnects with exponential backoff, resuming
  * from the last seen `seq` so the server replays anything missed. */
-export function useCaseEvents(caseId: string, currentUserId: string | undefined): void {
+export function useCaseEvents(caseId: string): void {
   const queryClient = useQueryClient()
   const lastSeqRef = useRef(0)
   const seenSeqsRef = useRef<Set<number>>(new Set())
@@ -55,7 +55,7 @@ export function useCaseEvents(caseId: string, currentUserId: string | undefined)
         if (seenSeqsRef.current.has(event.seq)) return
         seenSeqsRef.current.add(event.seq)
         lastSeqRef.current = Math.max(lastSeqRef.current, event.seq)
-        void applyCaseEvent(queryClient, caseId, event, currentUserId)
+        void applyCaseEvent(queryClient, caseId, event)
       }
 
       socket.onclose = () => {
@@ -79,5 +79,5 @@ export function useCaseEvents(caseId: string, currentUserId: string | undefined)
       if (retryTimer) clearTimeout(retryTimer)
       socket?.close()
     }
-  }, [caseId, currentUserId, queryClient])
+  }, [caseId, queryClient])
 }

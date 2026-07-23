@@ -5,6 +5,7 @@ import type { NoteTargetType } from '../api/generated'
 import { createNoteRequest, targetNotesQueryOptions } from '../api/notes'
 import { Button } from '../components/Button'
 import { TextArea } from '../components/TextArea'
+import { markSelfMutated } from '../events/selfMutationTracker'
 import styles from './NotesPanel.module.css'
 
 interface NotesPanelProps {
@@ -20,7 +21,8 @@ export function NotesPanel({ caseId, targetType, targetId }: NotesPanelProps) {
 
   const createNote = useMutation({
     mutationFn: (noteBody: string) => createNoteRequest(caseId, targetType, targetId, noteBody),
-    onSuccess: () => {
+    onSuccess: (note) => {
+      markSelfMutated(note.id)
       queryClient.invalidateQueries({
         queryKey: targetNotesQueryOptions(caseId, targetType, targetId).queryKey,
       })
