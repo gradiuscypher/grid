@@ -162,15 +162,15 @@ async def add_member(
         return existing
     member = CaseMember(case_id=case_id, user_id=target_user_id, role=role)
     db.add(member)
-    await record_event(
-        db,
-        case_id=case_id,
-        actor_type=CreatedVia.USER,
-        actor_user_id=actor.id,
-        type="case.member_added",
-        payload={"user_id": str(target_user_id), "role": role.value},
-    )
     try:
+        await record_event(
+            db,
+            case_id=case_id,
+            actor_type=CreatedVia.USER,
+            actor_user_id=actor.id,
+            type="case.member_added",
+            payload={"user_id": str(target_user_id), "role": role.value},
+        )
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
