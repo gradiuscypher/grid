@@ -3,19 +3,8 @@ import { edgesQueryOptions } from '../api/edges'
 import type { EdgeOut, NodeOut } from '../api/generated'
 import { getEdge, getNode } from '../api/generated'
 import { nodesQueryOptions } from '../api/nodes'
+import { removeByIds, upsertById } from '../api/queryCache'
 import type { CaseEvent } from './types'
-
-function upsertById<T extends { id: string }>(list: T[], item: T): T[] {
-  const index = list.findIndex((existing) => existing.id === item.id)
-  if (index === -1) return [...list, item]
-  const next = [...list]
-  next[index] = item
-  return next
-}
-
-function removeByIds<T extends { id: string }>(list: T[], ids: Set<string>): T[] {
-  return list.filter((item) => !ids.has(item.id))
-}
 
 /** Patches the TanStack Query cache from one live/replayed case event. Event
  * payloads are intentionally thin (ids only — see `events/service.py`), so

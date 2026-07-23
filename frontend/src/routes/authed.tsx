@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createRoute, Link, Outlet, redirect, useNavigate } from '@tanstack/react-router'
 import { logoutRequest, meQueryOptions } from '../api/auth'
 import { Button } from '../components/Button'
+import { CommandPalette } from '../components/CommandPalette'
 import { RouteError } from '../components/RouteError'
 import { ThemeToggle } from '../components/ThemeToggle'
 import styles from './AppShell.module.css'
@@ -53,6 +54,7 @@ function AuthedLayout() {
       <main className={styles.main}>
         <Outlet />
       </main>
+      <CommandPalette />
     </div>
   )
 }
