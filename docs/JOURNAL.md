@@ -75,6 +75,29 @@ mandatory throughout, dedup on canonical_value), the event log +
 polish + `make api-client`, and the comprehensive role×action authz matrix test
 (now possible once all the actions it needs to matrix against actually exist).
 
+## 2026-07-23 — Tooling: PR review/draft skills, self-review follow-up
+
+Added three repo-scoped Claude Code skills (`.claude/skills/`): `draft-pr` (builds a
+PR body from the branch diff, mapped to PLAN checkboxes), `review-pr` (reviews an open
+PR against the CLAUDE.md non-negotiables, runs `make lint typecheck test`, defers to
+`review-security` for new security surfaces), and `review-security` (whole-codebase
+posture review grounded in the ARCHITECTURE trust model). Docs-only, no app code
+touched — none of the service-layer/provenance/typed-everything rubric applies.
+
+Opened PR #4, then ran `/review-pr` on it as a self-review. One real finding: this
+JOURNAL had no entry for the session, which CLAUDE.md requires unconditionally
+("a dated entry every working session") — fixed by adding this entry. Everything else
+checked out clean: `make lint typecheck test` green (a stray untracked
+`frontend/openapi.json` in the working tree caused one unrelated lint failure — not
+part of the diff, deleted before the real lint run), and the skills' architecture
+references (ADR-007/009, ARCHITECTURE §3–§6/§10, `case_members`, argon2id, Fernet)
+were cross-checked against the actual docs and are accurate.
+
+Next: address this feedback pattern generally — built `/respond-pr-feedback` to turn
+"review found X, go fix X and record it" into a repeatable skill. Then back to
+Phase 1 — backend core (data model, auth, CRUD, events); first unchecked box is
+"Settings via pydantic-settings; SQLAlchemy 2.0 typed models; Alembic baseline."
+
 ## 2026-07-23 — Phase 0: scaffolding & tooling
 
 Built out Phase 0 in full: `backend/` (uv, Python 3.13, FastAPI + `/api/v1/healthz`,
