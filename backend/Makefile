@@ -24,4 +24,4 @@ fmt:
 	uv run ruff format .
 
 migrate:
-	@echo "no migrations yet (Alembic lands in Phase 1)"
+	uv run alembic upgrade head

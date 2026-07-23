@@ -9,6 +9,10 @@ dependencies = [
     "uvicorn[standard]>=0.34",
     "pydantic>=2.10",
     "pydantic-settings>=2.7",
+    "sqlalchemy>=2.0.36",
+    "psycopg[binary,pool]>=3.2",
+    "alembic>=1.14",
+    "argon2-cffi>=23.1",
 ]
 
 [dependency-groups]
@@ -18,6 +22,7 @@ dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.25",
     "httpx>=0.28",
+    "asgi-lifespan>=2.1",
 ]
 
 [build-system]
@@ -35,6 +40,7 @@ testpaths = ["tests"]
 line-length = 100
 target-version = "py313"
 src = ["src", "tests"]
+extend-exclude = ["src/grid/db/alembic/versions"]
 
 [tool.ruff.lint]
 select = [

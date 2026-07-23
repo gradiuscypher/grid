@@ -117,8 +117,13 @@ current as targets land (Phase 0+):**
   UI on :8080.
 - `make down` — stop the dev compose stack
 - `make test` / `make lint` / `make typecheck` / `make fmt` — run natively via
-  `uv run` / `pnpm`, no Docker required; same targets CI runs
-- `make migrate` — apply Alembic migrations (stub until Phase 1)
+  `uv run` / `pnpm`, no Docker required for lint/typecheck/fmt or frontend tests.
+  **Backend `test` needs a reachable Postgres** (Phase 1+: integration tests hit it
+  for real, per ARCHITECTURE §9) — `docker compose -f deploy/compose.dev.yaml up -d db`
+  first, or rely on CI's `postgres` service container. Tests create/use a disposable
+  `<db>_test` sibling database, never the dev DB.
+- `make migrate` — apply Alembic migrations (backend: `alembic upgrade head`,
+  `src/grid/db/alembic/`); same Postgres requirement as `test`
 - `make api-client` — regenerate the typed TS client from OpenAPI (stub until Phase 1)
 
 ## Conventions (non-negotiable)
