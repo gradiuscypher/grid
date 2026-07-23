@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createRoute, Link } from '@tanstack/react-router'
 import { caseQueryOptions } from '../api/cases'
 import { apiErrorMessage } from '../api/errors'
+import { RouteError } from '../components/RouteError'
 import { authedLayoutRoute } from './authed'
 import styles from './CaseDetailPage.module.css'
 
@@ -11,6 +12,7 @@ export const caseDetailRoute = createRoute({
   loader: ({ context, params }) =>
     context.queryClient.ensureQueryData(caseQueryOptions(params.caseId)),
   component: CaseDetailPage,
+  errorComponent: RouteError,
 })
 
 function CaseDetailPage() {
