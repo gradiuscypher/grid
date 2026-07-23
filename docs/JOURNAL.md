@@ -45,6 +45,23 @@ Surprises / notes for next session:
   Phase 2 scope — the Phase 0 frontend page uses bare unstyled CSS with the fallback
   mono stack on purpose, not a placeholder for something forgotten.
 
+**Post-review follow-up (same day):** gradius asked for a self-review; it surfaced two
+process violations (no scope statement before coding, commits/ticks batched at the
+end) and several loose ends. Addressed in follow-up commits: Biome upgraded to 2.5.5
+(public/ excluded from checks — Biome 2 lints standalone SVGs), `.env.example` added
+(plus `--project-directory .` on compose so a root `.env` is actually read — compose's
+default project dir is deploy/, and this compose version resolves the file's relative
+paths against the project dir, so compose paths became root-relative), the founding
+product brief moved from README.md to `docs/notes/2026-07-23-original-product-brief.md`
+with a real README in its place, a note filed on Temporal sharing the app Postgres
+superuser (`docs/notes/2026-07-23-temporal-postgres-credentials.md`, feeds Phase 6),
+and CLAUDE.md's session-lifecycle rules hardened from advisory to structural (scope
+statement is a required visible deliverable; checkpoint rule for per-checkbox
+commits). Still open from the review: CI has never actually run (branch not pushed) —
+verify it goes green on first push, and watch for a pnpm/action-setup "multiple
+versions" conflict between its `version` input and package.json's `packageManager`
+field; if it errors, drop the `version:` input from ci.yml.
+
 Next: Phase 1 — backend core (data model, auth, CRUD, events). First unchecked box is
 "Settings via pydantic-settings; SQLAlchemy 2.0 typed models; Alembic baseline."
 
