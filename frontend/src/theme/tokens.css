@@ -1,0 +1,64 @@
+:root {
+  color-scheme: light dark;
+
+  --font-mono: "Berkeley Mono", ui-monospace, "JetBrains Mono", monospace;
+
+  --radius: 0px;
+  --border-width: 1px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.9375rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+
+  --color-bg: #f4f4f1;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-border: #1a1a1a;
+  --color-border-muted: #c7c7c0;
+  --color-text: #131311;
+  --color-text-muted: #5c5c54;
+  --color-accent: #c8481a;
+  --color-accent-text: #ffffff;
+  --color-danger: #a8271b;
+  --color-danger-text: #ffffff;
+  --color-focus: #131311;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #101110;
+  --color-surface: #17181a;
+  --color-surface-raised: #1e1f21;
+  --color-border: #3f403c;
+  --color-border-muted: #2a2b28;
+  --color-text: #f2f2ee;
+  --color-text-muted: #a3a39a;
+  --color-accent: #ff6a33;
+  --color-accent-text: #101110;
+  --color-danger: #ff6b60;
+  --color-danger-text: #17181a;
+  --color-focus: #f2f2ee;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #101110;
+    --color-surface: #17181a;
+    --color-surface-raised: #1e1f21;
+    --color-border: #3f403c;
+    --color-border-muted: #2a2b28;
+    --color-text: #f2f2ee;
+    --color-text-muted: #a3a39a;
+    --color-accent: #ff6a33;
+    --color-accent-text: #101110;
+    --color-danger: #ff6b60;
+    --color-danger-text: #17181a;
+    --color-focus: #f2f2ee;
+  }
+}
