@@ -2,6 +2,8 @@ import { create } from 'zustand'
 
 export type Theme = 'light' | 'dark'
 
+// index.html has an inline pre-hydration copy of this fallback logic (it must run
+// before any JS module loads, so it can't import this file) — keep both in sync.
 const STORAGE_KEY = 'grid-theme'
 
 function systemTheme(): Theme {

@@ -7,7 +7,10 @@
     <title>Grid</title>
     <script>
       // Set the theme attribute before first paint to avoid a flash of the
-      // wrong theme; state/themeStore.ts owns this logic post-hydration.
+      // wrong theme; state/themeStore.ts owns this logic post-hydration. This
+      // duplicates initialTheme()/systemTheme() from that file on purpose — it
+      // must run before any JS module loads, so it can't import the store. If
+      // the storage key or fallback rule changes, update both places.
       ;(() => {
         var stored = localStorage.getItem('grid-theme')
         var theme =
