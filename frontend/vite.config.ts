@@ -11,6 +11,11 @@ export default defineConfig({
         target: process.env.GRID_API_PROXY_TARGET ?? 'http://localhost:8000',
         changeOrigin: true,
       },
+      '/ws': {
+        target: process.env.GRID_API_PROXY_TARGET ?? 'http://localhost:8000',
+        changeOrigin: true,
+        ws: true,
+      },
     },
   },
   test: {
