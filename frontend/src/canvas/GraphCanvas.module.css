@@ -1,4 +1,30 @@
 .canvas {
   width: 100%;
   height: 100%;
+
+  /* @xyflow/react's stylesheet exposes these as CSS custom properties
+   * specifically so hosts can re-skin it (see node_modules/@xyflow/react/dist/style.css)
+   * — its own defaults are light-only, which otherwise leaves Controls/Background/edges
+   * unthemed in dark mode. Custom properties inherit into the library's internal
+   * .react-flow subtree, so setting them once here is enough. */
+  --xy-background-color: var(--color-bg);
+  --xy-background-pattern-dots-color: var(--color-border-muted);
+  --xy-edge-stroke: var(--color-border);
+  --xy-edge-stroke-selected: var(--color-focus);
+  --xy-edge-label-background-color: var(--color-surface);
+  --xy-edge-label-color: var(--color-text);
+  --xy-node-background-color: var(--color-surface);
+  --xy-node-color: var(--color-text);
+  --xy-node-border: none;
+  --xy-selection-background-color: rgb(200 72 26 / 8%);
+  --xy-selection-border: 1px dotted var(--color-accent);
+  --xy-controls-button-background-color: var(--color-surface);
+  --xy-controls-button-background-color-hover: var(--color-bg);
+  --xy-controls-button-color: var(--color-text);
+  --xy-controls-button-border-color: var(--color-border);
+  --xy-controls-box-shadow: none;
+}
+
+.canvas :global(.react-flow__controls) {
+  border: var(--border-width) solid var(--color-border);
 }
