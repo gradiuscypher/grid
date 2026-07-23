@@ -42,6 +42,17 @@ Next: gradius to decide where case-membership UI lands in PLAN.md (Phase 2c vs. 
 into Phase 5), then back to Phase 3 — Temporal worker + transform spec, first
 unchecked box.
 
+**Same-day follow-up:** gradius chose to fold case-membership UI into Phase 5 (added as
+the first checkbox, ahead of presence — PLAN.md updated, IDEAS.md entry marked
+promoted). Also asked to add jared's real account (`jared@grds.io`) as an editor on
+gradius's real dev case ("Test Case 1", `37ae823a-8ffb-4198-bee4-ea42a7d3cc04") so the
+two of them can test cross-account sync directly instead of throwaway demo accounts.
+Didn't have gradius's session password to call the HTTP endpoint as them, so ran
+`case_service.add_member` directly against the dev DB from a one-off script — same
+service-layer code path as the real API (authz check, `case.member_added` event
+recorded at seq 111), just skipping the HTTP session layer. Verified via
+`case_members` and the event log, not just the script's return value.
+
 ## 2026-07-23 — `/review-changes` pass on `phase-2b-canvas-inspector`
 
 Ran `/review-changes` against `main`. Verdict: approve-with-nits. Re-verified rather

@@ -33,7 +33,5 @@ adding it to PLAN.md's backlog or an ADR.
   purpose.** The backend has full case-sharing (`CaseMember` roles, add/remove/list
   members, plus a new `GET /auth/lookup?email=` to find a `user_id` from an email) but
   no frontend surface at all — no invite dialog, no member list, no role editor on
-  `CaseDetailPage`. Neither Phase 2 nor Phase 5 in PLAN.md actually names this. Needs
-  a PLAN.md slot (Phase 2c or folded into Phase 5) before Phase 5 collaboration work
-  starts, since presence/multiplayer features assume you can already get a second
-  account onto a case.
+  `CaseDetailPage`. Promoted: gradius folded it into Phase 5 as a prerequisite
+  checkbox ahead of presence/multiplayer.
