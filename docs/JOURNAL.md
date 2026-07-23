@@ -5,6 +5,32 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — `/review-changes` pass on `phase-2a-shell-auth`
+
+Ran `/review-changes` against `main` on the Phase 2a branch (no PR yet). Verdict was
+approve-with-nits: `make lint typecheck test` clean (15 Vitest tests, matching the
+actual count — see below), conventions held, no new backend security surface (the
+frontend just calls the already-reviewed Phase 1 auth endpoints; confirmed no
+token/session data touches `localStorage`, only the theme preference does). Four nits,
+all fixed:
+
+- JOURNAL's previous entry claimed 19 Vitest tests; the real count is 15. Corrected.
+- Theme flash-prevention logic is necessarily duplicated between `index.html`'s inline
+  pre-hydration script and `state/themeStore.ts` (the inline script can't import a
+  module — it has to run before any JS loads). Added comments in both files
+  cross-referencing the other, so a future change to the storage key or fallback rule
+  doesn't silently update only one side.
+- `authedLayoutRoute` and `caseDetailRoute` had no `errorComponent`, so a loader/guard
+  failure (dead case ID, `/auth/me` network error) fell through to TanStack Router's
+  unthemed default error UI. Added `components/RouteError.tsx` (themed panel, reuses
+  `apiErrorMessage`, `reset()` wired to a Retry button) and wired it into both routes.
+- Focus-outline width was hardcoded `2px` in two stylesheets while every other
+  border-ish value went through a token. Added `--focus-width` to `theme/tokens.css`
+  and switched both call sites to it.
+
+No pushback, no deferrals — all four were small and in-scope. Not pushing or
+re-requesting review; that's gradius's call.
+
 ## 2026-07-23 — Phase 2a: theme system, Berkeley Mono, auth + case-list app shell
 
 Phase 1 was fully merged to `main`, so this session opened Phase 2 (frontend core).
