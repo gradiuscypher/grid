@@ -41,7 +41,7 @@ live event stream. (Schema details: ARCHITECTURE §3–§5.)
       with JSON Schema property validation
 - [x] Service layer + REST CRUD: cases, nodes (canonicalization + dedup on
       canonical_value), edges, notes, waypoints, groups — provenance mandatory
-- [ ] Event log: typed events appended in-transaction by services; `/ws/cases/{id}`
+- [x] Event log: typed events appended in-transaction by services; `/ws/cases/{id}`
       broadcasting via pg LISTEN/NOTIFY; replay-from-seq on reconnect
 - [ ] OpenAPI polish (operation ids, tags) + `make api-client` generating the TS client
 - [ ] Tests: service unit tests; API integration tests against real Postgres; authz
