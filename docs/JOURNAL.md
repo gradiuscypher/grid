@@ -5,6 +5,99 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-23 — Phase 1b: CRUD, event log/WS, OpenAPI client, authz matrix — Phase 1 complete
+
+Picked up right where 1a left off, on `phase-1b-crud-events` (stacked on
+`phase-1a-models-auth`, which was still awaiting review — opened PR #2 for it
+at the start of this session; per gradius's call, I open PRs and they merge,
+never the reverse). Finished all four remaining Phase 1 checkboxes in one
+session, committing after each.
+
+**Landed:**
+- Full service-layer CRUD for nodes, edges, notes, waypoints, groups, plus
+  filling out cases (update/delete). Nodes/edges are dedup-idempotent on
+  create (repeat create with the same canonical value returns the existing
+  row, matching ARCHITECTURE's "dedup is structural"); canonicalization rules
+  per builtin entity type live in `services/canonicalize.py`. Node/edge
+  identity fields (entity_type, value) are immutable after creation. Deleting
+  a node cascades its edges and group memberships by hand in the service
+  layer — the DB has no FK cascade anywhere, by design (service layer is the
+  only writer), so `delete_case` also manually clears every child table in
+  FK-safe order.
+- Event log + realtime: every mutation across all these services now appends
+  a typed event row and queues a `pg_notify` in the same transaction
+  (`events/service.py`). A background task (`events/listener.py`, started in
+  `main.py`'s new lifespan) holds one LISTEN connection per process and fans
+  notified rows out to in-process WS subscribers (`events/manager.py`).
+  `/ws/cases/{id}` replays the backlog since a client-supplied `seq`, then
+  streams live.
+- **WS auth needed a real decision, not just an implementation.** ARCHITECTURE
+  doesn't cover it, and the existing cookie+custom-header pattern doesn't
+  carry over — browsers can't attach a custom header to a WS handshake. Asked
+  gradius; went with short-lived, single-use REST-minted tickets
+  (`POST /api/v1/ws-tickets`, `events/tickets.py`) over Origin-header
+  validation. In-memory by design, matching the single-API-process compose
+  topology — would need to move to Postgres if the API ever runs multiple
+  replicas.
+- OpenAPI polish: every route now has an explicit `operation_id` (previously
+  FastAPI's verbose auto-generated ones). `make api-client` does real work
+  now — `backend openapi-schema` dumps `app.openapi()` without needing a
+  running server, `@hey-api/openapi-ts` generates a typed fetch client into
+  `frontend/src/api/generated/` (committed; the intermediate `openapi.json`
+  dump is gitignored and regenerated each run).
+- Comprehensive role×action authz matrix test
+  (`tests/api/test_authz_matrix.py`): for every case-scoped action, checks
+  that the role just below its documented minimum is forbidden and the
+  minimum role itself succeeds. 75 backend tests total now, all real
+  Postgres.
+
+**Surprises / notes for next session:**
+- **The live-broadcast path can't be exercised by the existing pytest
+  harness**, and that took real debugging time to nail down (not a code bug —
+  I initially thought the LISTEN/NOTIFY pipeline itself was broken, added
+  debug tracing, and eventually proved via a manual dev-stack walkthrough that
+  it works correctly end-to-end). The per-test transaction fixture never
+  truly commits (rolled back at teardown), so `pg_notify` never actually
+  fires; and mixing httpx's async client with Starlette's thread-portal WS
+  test client risks binding a DB connection to the wrong event loop. Automated
+  coverage here is ticket issue/redeem/expiry and the `/ws-tickets` REST
+  endpoint; live broadcast is verified manually against the dev compose stack
+  (transcript below) — flagging this gap explicitly rather than leaving it
+  silently under-tested. Worth reconsidering if `httpx-ws` (or similar) is
+  ever added as a dependency.
+- `@hey-api/client-fetch` is deprecated as a standalone package — bundled
+  directly into `@hey-api/openapi-ts` now. Reference it by plugin name in
+  `openapi-ts.config.ts`, don't install it separately (I did, then removed it
+  once `pnpm add` warned about it).
+- Two pre-existing tests (`test_models.py`, `test_entity_types.py`) created
+  their own ad hoc `EntityType(name="domain", ...)` rows for fixtures; once
+  `conftest.py` started seeding the real ARCHITECTURE §3 builtins (needed so
+  my new tests could reference "domain"/"ipv4" by name like production code
+  does), those collided on the unique name constraint. Renamed to
+  `test_widget`, a name that can't collide with real builtins.
+- Still open from 1a, unchanged: API key scope is a single `read_only: bool`,
+  and there's no admin/superuser concept gating entity-type management.
+  Neither came up as blocking this session; still flagging for the architect.
+
+**Exit criteria demonstrated** (curl + WS transcript, not just asserted):
+register → create case → mint API key → create a domain node → **repeat
+create with different casing returns HTTP 200 with the same node id** (dedup)
+→ create an IPv4 node → connect a second WS client with a minted ticket, which
+immediately replays the case/node backlog → from a separate terminal, create
+an edge and a third node → **the live WS client receives `edge.created` and
+`node.created` events in real time**, no polling. `test_authz_matrix.py`'s 13
+tests pass (role×action boundaries for cases/nodes/edges/notes/waypoints/
+groups). `make api-client` generates a clean TypeScript client from a cold
+start (deleted `openapi.json` and `src/api/generated/` first, regenerated
+both). `make lint typecheck test` clean on both stacks, 75 backend tests +
+2 frontend tests.
+
+Next: Phase 2 — frontend core (canvas & CRUD). First unchecked box is "Theme
+system: CSS-variable tokens, industrial default, light + dark, theme
+switcher." PR #2 (Phase 1a) is still open pending gradius's review; this
+session's work should go up as its own PR against `main` (or rebased onto
+main once #2 merges — gradius's call on sequencing).
+
 ## 2026-07-23 — Phase 1a: settings, models, Alembic, auth, entity types
 
 Phase 1 is too large for one session (7 checkboxes: schema, auth, entity types,
