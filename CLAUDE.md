@@ -57,14 +57,20 @@ The repo — not your memory — is the state that survives between sessions.
 **Starting a session:**
 1. Read the latest entry in `docs/JOURNAL.md` and find the first unchecked box in
    `docs/PLAN.md`. Skim `git log --oneline -20`.
-2. State your understanding of the session's scope (which checkboxes, which exit
-   criteria) before writing code. If it doesn't match what gradius asked for, resolve
-   that first.
+2. **Post a scope statement before any code or file changes.** It's a short, visible
+   message (not just internal reasoning) containing: (a) which PLAN checkboxes this
+   session targets, (b) the exit criteria you'll demonstrate, (c) anything you expect
+   to defer or can't verify in this environment. Writing code before the scope
+   statement is a process violation, even when the scope seems obvious — the statement
+   is what lets gradius catch a wrong assumption while it's still free to fix.
 3. Work on a phase branch (e.g. `phase-1a-models-auth`), never directly on `main`.
 
 **During:** commit per checkbox or logical unit with clear messages — small commits
 are the next session's archaeology. Tick PLAN checkboxes as you go, not in a batch at
-the end.
+the end. **Checkpoint rule:** before starting checkbox N+1, checkbox N must be
+committed and ticked. If you notice uncommitted work spanning more than one checkbox,
+stop and split it into commits before writing anything new — a session that dies
+mid-phase should leave behind commits, not a pile of unstaged files.
 
 **Ending a session (whether the phase is done or context is running long):**
 1. Stop at a seam: tests green, nothing half-wired.
