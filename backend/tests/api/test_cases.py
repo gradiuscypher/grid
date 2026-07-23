@@ -92,6 +92,65 @@ async def test_cannot_remove_last_owner(api_client_factory: ClientFactory) -> No
     assert response.status_code == 403
 
 
+async def test_editor_can_update_case(api_client_factory: ClientFactory) -> None:
+    owner = await api_client_factory()
+    await _register(owner, "owner@example.com")
+    case = await _create_case(owner)
+
+    editor = await api_client_factory()
+    editor_user = await _register(editor, "editor@example.com")
+    await owner.post(
+        f"/api/v1/cases/{case['id']}/members",
+        json={"user_id": editor_user["id"], "role": "editor"},
+    )
+
+    updated = await editor.patch(f"/api/v1/cases/{case['id']}", json={"name": "Renamed"})
+    assert updated.status_code == 200
+    assert updated.json()["name"] == "Renamed"
+
+
+async def test_viewer_cannot_update_case(api_client_factory: ClientFactory) -> None:
+    owner = await api_client_factory()
+    await _register(owner, "owner@example.com")
+    case = await _create_case(owner)
+
+    viewer = await api_client_factory()
+    viewer_user = await _register(viewer, "viewer@example.com")
+    await owner.post(
+        f"/api/v1/cases/{case['id']}/members",
+        json={"user_id": viewer_user["id"], "role": "viewer"},
+    )
+
+    response = await viewer.patch(f"/api/v1/cases/{case['id']}", json={"name": "Renamed"})
+    assert response.status_code == 403
+
+
+async def test_owner_can_delete_case(api_client_factory: ClientFactory) -> None:
+    owner = await api_client_factory()
+    await _register(owner, "owner@example.com")
+    case = await _create_case(owner)
+
+    deleted = await owner.delete(f"/api/v1/cases/{case['id']}")
+    assert deleted.status_code == 204
+    assert (await owner.get(f"/api/v1/cases/{case['id']}")).status_code == 403
+
+
+async def test_editor_cannot_delete_case(api_client_factory: ClientFactory) -> None:
+    owner = await api_client_factory()
+    await _register(owner, "owner@example.com")
+    case = await _create_case(owner)
+
+    editor = await api_client_factory()
+    editor_user = await _register(editor, "editor@example.com")
+    await owner.post(
+        f"/api/v1/cases/{case['id']}/members",
+        json={"user_id": editor_user["id"], "role": "editor"},
+    )
+
+    response = await editor.delete(f"/api/v1/cases/{case['id']}")
+    assert response.status_code == 403
+
+
 async def test_read_only_api_key_cannot_create_case(api_client_factory: ClientFactory) -> None:
     owner = await api_client_factory()
     await _register(owner, "owner@example.com")

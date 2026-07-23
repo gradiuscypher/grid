@@ -11,9 +11,29 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from grid.core.config import get_settings
-from grid.db.models import Base
+from grid.db.models import Base, EntityType
 from grid.db.session import get_session
 from grid.main import app
+
+# Mirrors the `244e9746d9db` data migration's BUILTINS (ARCHITECTURE §3) — kept as
+# a separate literal rather than importing the versions module, matching
+# tests/db/test_migrations.py's existing precedent (module name isn't a valid
+# Python identifier, and versions/ is excluded from normal imports by design).
+_BUILTIN_ENTITY_TYPES: list[tuple[str, str, str, str]] = [
+    ("domain", "Domain", "globe", "#4f8cff"),
+    ("hostname", "Hostname", "server", "#4f8cff"),
+    ("ipv4", "IPv4 Address", "hard-drive", "#22a06b"),
+    ("ipv6", "IPv6 Address", "hard-drive", "#22a06b"),
+    ("cidr", "CIDR Block", "network", "#22a06b"),
+    ("asn", "ASN", "share-2", "#22a06b"),
+    ("url", "URL", "link", "#a855f7"),
+    ("email", "Email Address", "mail", "#f59e0b"),
+    ("username", "Username", "at-sign", "#f59e0b"),
+    ("person", "Person", "user", "#ef4444"),
+    ("organization", "Organization", "building", "#ef4444"),
+    ("hash", "Hash", "hash", "#6b7280"),
+    ("note", "Note", "file-text", "#eab308"),
+]
 
 
 def _test_db_url(base_url: str) -> str:
@@ -43,12 +63,33 @@ def test_database_url() -> str:
     return test_url
 
 
+async def _seed_builtin_entity_types(session: AsyncSession) -> None:
+    """Mirrors the `244e9746d9db` data migration — `create_all` (unlike a real
+    `alembic upgrade head`) skips data migrations, so tests need this done by hand
+    to see the same builtins dev/prod always have."""
+    session.add_all(
+        EntityType(
+            name=name,
+            display_name=display_name,
+            is_builtin=True,
+            json_schema={"type": "object"},
+            icon=icon,
+            color=color,
+        )
+        for name, display_name, icon, color in _BUILTIN_ENTITY_TYPES
+    )
+    await session.commit()
+
+
 @pytest.fixture(scope="session")
 async def test_engine(test_database_url: str) -> AsyncGenerator[AsyncEngine]:
     engine = create_async_engine(test_database_url)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
+    session_maker = async_sessionmaker(engine, expire_on_commit=False)
+    async with session_maker() as session:
+        await _seed_builtin_entity_types(session)
     yield engine
     await engine.dispose()
 

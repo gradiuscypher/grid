@@ -15,6 +15,11 @@ class CaseCreateRequest(BaseModel):
     description: str | None = None
 
 
+class CaseUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = None
+
+
 class CaseOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -52,6 +57,20 @@ async def list_cases(actor: CurrentActor, db: DbSession) -> list[Case]:
 @router.get("/{case_id}", response_model=CaseOut)
 async def get_case(case_id: uuid.UUID, actor: CurrentActor, db: DbSession) -> Case:
     return await case_service.get_case(db, case_id=case_id, user=actor.user)
+
+
+@router.patch("/{case_id}", response_model=CaseOut)
+async def update_case(
+    case_id: uuid.UUID, body: CaseUpdateRequest, actor: WriteActor, db: DbSession
+) -> Case:
+    return await case_service.update_case(
+        db, case_id=case_id, user=actor.user, name=body.name, description=body.description
+    )
+
+
+@router.delete("/{case_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_case(case_id: uuid.UUID, actor: WriteActor, db: DbSession) -> None:
+    await case_service.delete_case(db, case_id=case_id, user=actor.user)
 
 
 @router.get("/{case_id}/members", response_model=list[MemberOut])

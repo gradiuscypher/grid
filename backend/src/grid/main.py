@@ -3,8 +3,13 @@ from fastapi.responses import JSONResponse
 
 from grid.api.v1.auth import router as auth_router
 from grid.api.v1.cases import router as cases_router
+from grid.api.v1.edges import router as edges_router
 from grid.api.v1.entity_types import router as entity_types_router
+from grid.api.v1.groups import router as groups_router
 from grid.api.v1.health import router as health_router
+from grid.api.v1.nodes import router as nodes_router
+from grid.api.v1.notes import router as notes_router
+from grid.api.v1.waypoints import router as waypoints_router
 from grid.core.errors import (
     ConflictError,
     ForbiddenError,
@@ -19,6 +24,11 @@ app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(cases_router, prefix="/api/v1")
 app.include_router(entity_types_router, prefix="/api/v1")
+app.include_router(nodes_router, prefix="/api/v1")
+app.include_router(edges_router, prefix="/api/v1")
+app.include_router(notes_router, prefix="/api/v1")
+app.include_router(waypoints_router, prefix="/api/v1")
+app.include_router(groups_router, prefix="/api/v1")
 
 
 def _as_json(status_code: int, exc: Exception) -> JSONResponse:

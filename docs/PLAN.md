@@ -39,7 +39,7 @@ live event stream. (Schema details: ARCHITECTURE §3–§5.)
 - [x] Entity type registry: seed builtins (domain, hostname, ipv4, ipv6, cidr, asn,
       url, email, username, person, organization, hash, note); CRUD for custom types
       with JSON Schema property validation
-- [ ] Service layer + REST CRUD: cases, nodes (canonicalization + dedup on
+- [x] Service layer + REST CRUD: cases, nodes (canonicalization + dedup on
       canonical_value), edges, notes, waypoints, groups — provenance mandatory
 - [ ] Event log: typed events appended in-transaction by services; `/ws/cases/{id}`
       broadcasting via pg LISTEN/NOTIFY; replay-from-seq on reconnect
