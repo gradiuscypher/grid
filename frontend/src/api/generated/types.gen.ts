@@ -622,6 +622,146 @@ export type RegisterRequest = {
 };
 
 /**
+ * TransformKind
+ */
+export type TransformKind = 'builtin' | 'remote';
+
+/**
+ * TransformOut
+ */
+export type TransformOut = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Slug
+     */
+    slug: string;
+    kind: TransformKind;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Input Types
+     */
+    input_types: Array<string>;
+    /**
+     * Output Types
+     */
+    output_types: Array<string>;
+    /**
+     * Params Schema
+     */
+    params_schema: {
+        [key: string]: unknown;
+    };
+    /**
+     * Credential Names
+     */
+    credential_names: Array<string>;
+    /**
+     * Timeout S
+     */
+    timeout_s: number;
+    /**
+     * Rate Limit
+     */
+    rate_limit: number | null;
+    /**
+     * Is Enabled
+     */
+    is_enabled: boolean;
+};
+
+/**
+ * TransformRunCreateRequest
+ */
+export type TransformRunCreateRequest = {
+    /**
+     * Transform Id
+     */
+    transform_id: string;
+    /**
+     * Input Node Ids
+     */
+    input_node_ids: Array<string>;
+    /**
+     * Params
+     */
+    params?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * TransformRunOut
+ */
+export type TransformRunOut = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Case Id
+     */
+    case_id: string;
+    /**
+     * Transform Id
+     */
+    transform_id: string;
+    status: TransformRunStatus;
+    /**
+     * Triggered By User Id
+     */
+    triggered_by_user_id: string;
+    /**
+     * Input Node Ids
+     */
+    input_node_ids: Array<string>;
+    /**
+     * Params
+     */
+    params: {
+        [key: string]: unknown;
+    };
+    /**
+     * Result Node Ids
+     */
+    result_node_ids: Array<string>;
+    /**
+     * Result Edge Ids
+     */
+    result_edge_ids: Array<string>;
+    /**
+     * Logs
+     */
+    logs: Array<string>;
+    /**
+     * Error
+     */
+    error: string | null;
+    /**
+     * Temporal Workflow Id
+     */
+    temporal_workflow_id: string | null;
+};
+
+/**
+ * TransformRunStatus
+ */
+export type TransformRunStatus = 'pending' | 'running' | 'succeeded' | 'failed';
+
+/**
  * UserOut
  */
 export type UserOut = {
@@ -2570,6 +2710,194 @@ export type RemoveGroupMemberResponses = {
 };
 
 export type RemoveGroupMemberResponse = RemoveGroupMemberResponses[keyof RemoveGroupMemberResponses];
+
+export type ListTransformsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Input Type
+         */
+        input_type?: string | null;
+    };
+    url: '/api/v1/transforms';
+};
+
+export type ListTransformsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListTransformsError = ListTransformsErrors[keyof ListTransformsErrors];
+
+export type ListTransformsResponses = {
+    /**
+     * Response List Transforms
+     *
+     * Successful Response
+     */
+    200: Array<TransformOut>;
+};
+
+export type ListTransformsResponse = ListTransformsResponses[keyof ListTransformsResponses];
+
+export type GetTransformData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Transform Id
+         */
+        transform_id: string;
+    };
+    query?: never;
+    url: '/api/v1/transforms/{transform_id}';
+};
+
+export type GetTransformErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTransformError = GetTransformErrors[keyof GetTransformErrors];
+
+export type GetTransformResponses = {
+    /**
+     * Successful Response
+     */
+    200: TransformOut;
+};
+
+export type GetTransformResponse = GetTransformResponses[keyof GetTransformResponses];
+
+export type ListTransformRunsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Case Id
+         */
+        case_id: string;
+    };
+    query?: never;
+    url: '/api/v1/cases/{case_id}/transform-runs';
+};
+
+export type ListTransformRunsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListTransformRunsError = ListTransformRunsErrors[keyof ListTransformRunsErrors];
+
+export type ListTransformRunsResponses = {
+    /**
+     * Response List Transform Runs
+     *
+     * Successful Response
+     */
+    200: Array<TransformRunOut>;
+};
+
+export type ListTransformRunsResponse = ListTransformRunsResponses[keyof ListTransformRunsResponses];
+
+export type RunTransformData = {
+    body: TransformRunCreateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Case Id
+         */
+        case_id: string;
+    };
+    query?: never;
+    url: '/api/v1/cases/{case_id}/transform-runs';
+};
+
+export type RunTransformErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RunTransformError = RunTransformErrors[keyof RunTransformErrors];
+
+export type RunTransformResponses = {
+    /**
+     * Successful Response
+     */
+    201: TransformRunOut;
+};
+
+export type RunTransformResponse = RunTransformResponses[keyof RunTransformResponses];
+
+export type GetTransformRunData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Case Id
+         */
+        case_id: string;
+        /**
+         * Run Id
+         */
+        run_id: string;
+    };
+    query?: never;
+    url: '/api/v1/cases/{case_id}/transform-runs/{run_id}';
+};
+
+export type GetTransformRunErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTransformRunError = GetTransformRunErrors[keyof GetTransformRunErrors];
+
+export type GetTransformRunResponses = {
+    /**
+     * Successful Response
+     */
+    200: TransformRunOut;
+};
+
+export type GetTransformRunResponse = GetTransformRunResponses[keyof GetTransformRunResponses];
 
 export type CreateWsTicketData = {
     body?: never;
