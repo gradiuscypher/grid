@@ -7,6 +7,7 @@ from grid.db.models.groups import Group, GroupMember
 from grid.db.models.nodes import Node
 from grid.db.models.notes import Note, NoteTargetType
 from grid.db.models.provenance import CreatedVia
+from grid.db.models.transforms import Transform, TransformKind, TransformRun, TransformRunStatus
 from grid.db.models.users import ApiKey, AuthSession, User
 from grid.db.models.waypoints import Waypoint
 
@@ -26,6 +27,10 @@ __all__ = [
     "Node",
     "Note",
     "NoteTargetType",
+    "Transform",
+    "TransformKind",
+    "TransformRun",
+    "TransformRunStatus",
     "User",
     "Waypoint",
 ]

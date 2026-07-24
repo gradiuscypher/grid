@@ -33,7 +33,7 @@ class Event(UUIDPkMixin, Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
     actor_transform_run_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
+        UUID(as_uuid=True), ForeignKey("transform_runs.id"), nullable=True
     )
     actor_conversation_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
