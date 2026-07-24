@@ -18,6 +18,7 @@ async def record_event(
     case_id: uuid.UUID,
     actor_type: CreatedVia,
     actor_user_id: uuid.UUID | None = None,
+    actor_transform_run_id: uuid.UUID | None = None,
     type: str,
     payload: dict[str, Any],
 ) -> Event:
@@ -28,6 +29,7 @@ async def record_event(
         case_id=case_id,
         actor_type=actor_type,
         actor_user_id=actor_user_id,
+        actor_transform_run_id=actor_transform_run_id,
         type=type,
         payload=payload,
     )
@@ -51,6 +53,9 @@ def serialize_event(event: Event) -> dict[str, Any]:
         "type": event.type,
         "actor_type": event.actor_type.value,
         "actor_user_id": str(event.actor_user_id) if event.actor_user_id else None,
+        "actor_transform_run_id": (
+            str(event.actor_transform_run_id) if event.actor_transform_run_id else None
+        ),
         "payload": event.payload,
         "created_at": event.created_at.isoformat(),
     }

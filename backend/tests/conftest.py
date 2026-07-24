@@ -14,6 +14,7 @@ from grid.core.config import get_settings
 from grid.db.models import Base, EntityType
 from grid.db.session import get_session
 from grid.main import app
+from grid.services.transforms import sync_builtin_transforms
 
 # Mirrors the `244e9746d9db` data migration's BUILTINS (ARCHITECTURE §3) — kept as
 # a separate literal rather than importing the versions module, matching
@@ -90,6 +91,7 @@ async def test_engine(test_database_url: str) -> AsyncGenerator[AsyncEngine]:
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
     async with session_maker() as session:
         await _seed_builtin_entity_types(session)
+        await sync_builtin_transforms(session)
     yield engine
     await engine.dispose()
 

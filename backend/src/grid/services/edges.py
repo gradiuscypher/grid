@@ -47,8 +47,11 @@ async def create_edge(
     relationship: str,
     label: str | None = None,
     properties: dict[str, Any] | None = None,
+    created_via: CreatedVia = CreatedVia.USER,
+    created_by_transform_run_id: uuid.UUID | None = None,
 ) -> tuple[Edge, bool]:
-    """Returns `(edge, created)`. Same structural-dedup contract as nodes."""
+    """Returns `(edge, created)`. Same structural-dedup contract as nodes; same
+    provenance-override contract as `nodes.create_node`."""
     await require_role(db, case_id=case_id, user_id=user.id, minimum=CaseRole.EDITOR)
     await _require_node_in_case(db, case_id=case_id, node_id=src_node_id)
     await _require_node_in_case(db, case_id=case_id, node_id=dst_node_id)
@@ -70,8 +73,9 @@ async def create_edge(
         relationship=relationship,
         label=label,
         properties=properties or {},
-        created_via=CreatedVia.USER,
-        created_by_user_id=user.id,
+        created_via=created_via,
+        created_by_user_id=user.id if created_via == CreatedVia.USER else None,
+        created_by_transform_run_id=created_by_transform_run_id,
     )
     db.add(edge)
     try:
@@ -92,8 +96,9 @@ async def create_edge(
     await record_event(
         db,
         case_id=case_id,
-        actor_type=CreatedVia.USER,
-        actor_user_id=user.id,
+        actor_type=created_via,
+        actor_user_id=user.id if created_via == CreatedVia.USER else None,
+        actor_transform_run_id=created_by_transform_run_id,
         type="edge.created",
         payload={
             "edge_id": str(edge.id),

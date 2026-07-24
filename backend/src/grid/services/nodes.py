@@ -36,10 +36,18 @@ async def create_node(
     position_x: float = 0.0,
     position_y: float = 0.0,
     confidence: float = 1.0,
+    created_via: CreatedVia = CreatedVia.USER,
+    created_by_transform_run_id: uuid.UUID | None = None,
 ) -> tuple[Node, bool]:
     """Returns `(node, created)`. Dedup is structural (ARCHITECTURE §3): a repeat
     create with the same (case_id, entity_type, canonical_value) returns the
-    existing node rather than erroring."""
+    existing node rather than erroring.
+
+    `user` is always required for the authz check (even for `created_via=TRANSFORM`,
+    where it's the run's triggering user, re-checked at merge time rather than
+    trusted from when the run started) but only recorded as provenance when
+    `created_via=USER` — the provenance columns are discriminated by `created_via`,
+    matching `ProvenanceMixin`."""
     await require_role(db, case_id=case_id, user_id=user.id, minimum=CaseRole.EDITOR)
     entity_type = await get_entity_type(db, entity_type_id=entity_type_id)
     properties = properties or {}
@@ -64,8 +72,9 @@ async def create_node(
         position_x=position_x,
         position_y=position_y,
         confidence=confidence,
-        created_via=CreatedVia.USER,
-        created_by_user_id=user.id,
+        created_via=created_via,
+        created_by_user_id=user.id if created_via == CreatedVia.USER else None,
+        created_by_transform_run_id=created_by_transform_run_id,
     )
     db.add(node)
     try:
@@ -83,8 +92,9 @@ async def create_node(
     await record_event(
         db,
         case_id=case_id,
-        actor_type=CreatedVia.USER,
-        actor_user_id=user.id,
+        actor_type=created_via,
+        actor_user_id=user.id if created_via == CreatedVia.USER else None,
+        actor_transform_run_id=created_by_transform_run_id,
         type="node.created",
         payload={
             "node_id": str(node.id),

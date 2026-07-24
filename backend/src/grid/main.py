@@ -14,6 +14,8 @@ from grid.api.v1.groups import router as groups_router
 from grid.api.v1.health import router as health_router
 from grid.api.v1.nodes import router as nodes_router
 from grid.api.v1.notes import router as notes_router
+from grid.api.v1.transform_runs import router as transform_runs_router
+from grid.api.v1.transforms import router as transforms_router
 from grid.api.v1.waypoints import router as waypoints_router
 from grid.api.v1.ws_tickets import router as ws_tickets_router
 from grid.api.ws import router as ws_router
@@ -24,11 +26,15 @@ from grid.core.errors import (
     UnauthorizedError,
     ValidationError,
 )
+from grid.db.session import async_session_maker
 from grid.events.listener import run_listener
+from grid.services.transforms import sync_builtin_transforms
 
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    async with async_session_maker() as db:
+        await sync_builtin_transforms(db)
     listener_task = asyncio.create_task(run_listener())
     try:
         yield
@@ -49,6 +55,8 @@ app.include_router(edges_router, prefix="/api/v1")
 app.include_router(notes_router, prefix="/api/v1")
 app.include_router(waypoints_router, prefix="/api/v1")
 app.include_router(groups_router, prefix="/api/v1")
+app.include_router(transforms_router, prefix="/api/v1")
+app.include_router(transform_runs_router, prefix="/api/v1")
 app.include_router(ws_tickets_router, prefix="/api/v1")
 app.include_router(ws_router)
 
