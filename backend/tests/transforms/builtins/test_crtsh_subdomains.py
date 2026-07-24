@@ -40,6 +40,11 @@ class _FailingAsyncClient(_FakeAsyncClient):
         raise httpx.ConnectError("boom")
 
 
+class _TimingOutAsyncClient(_FakeAsyncClient):
+    async def get(self, url: str, params: dict[str, str] | None = None) -> _FakeResponse:
+        raise httpx.ReadTimeout("")  # real crt.sh behavior observed against the dev stack
+
+
 async def test_crtsh_subdomains_dedupes_and_strips_wildcards(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -71,3 +76,15 @@ async def test_crtsh_subdomains_logs_http_errors_without_raising(
 
     assert result.nodes == []
     assert "crt.sh lookup failed" in result.logs[0]
+
+
+async def test_crtsh_subdomains_logs_exception_type_when_message_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(crtsh_module.httpx, "AsyncClient", _TimingOutAsyncClient)
+
+    result = await CrtShSubdomainsTransform().run(
+        RunRequest(inputs=[TransformInput(type="domain", value="example.com")])
+    )
+
+    assert result.logs[0] == "example.com: crt.sh lookup failed: ReadTimeout"

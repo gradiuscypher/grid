@@ -16,6 +16,7 @@ from grid.db.models import (
     GroupMember,
     Node,
     Note,
+    TransformRun,
     User,
     Waypoint,
 )
@@ -110,6 +111,9 @@ async def delete_case(db: AsyncSession, *, case_id: uuid.UUID, user: User) -> No
     await db.execute(delete(Edge).where(Edge.case_id == case_id))
     await db.execute(delete(Node).where(Node.case_id == case_id))
     await db.execute(delete(Event).where(Event.case_id == case_id))
+    # Nodes/edges/events above may reference transform_runs (created_by_transform_run_id
+    # / actor_transform_run_id) — deleted first since they're the FK children here.
+    await db.execute(delete(TransformRun).where(TransformRun.case_id == case_id))
     await db.execute(delete(CaseMember).where(CaseMember.case_id == case_id))
     await db.delete(case)
     await db.commit()

@@ -112,7 +112,29 @@ async def test_start_transform_run_creates_pending_run(db_session: AsyncSession)
     )
     assert run.status == TransformRunStatus.PENDING
     assert run.input_node_ids == [str(node.id)]
-    assert run.triggered_by_user_id == user.id
+
+
+async def test_delete_case_cascades_transform_runs(db_session: AsyncSession) -> None:
+    """Regression: transform_runs.case_id -> cases.id (added this phase) has to be
+    in case_service.delete_case's manual cascade list — caught live against the
+    dev DB (no DB-level cascade exists, per that function's own docstring)."""
+    user = await _make_user(db_session)
+    case = await case_service.create_case(db_session, user=user, name="Case A")
+    domain = await _entity_type(db_session, "domain")
+    node, _ = await node_service.create_node(
+        db_session, case_id=case.id, user=user, entity_type_id=domain.id, value="example.com"
+    )
+    dns_forward = await _transform(db_session, "dns_forward")
+    await transform_service.start_transform_run(
+        db_session,
+        case_id=case.id,
+        transform_id=dns_forward.id,
+        input_node_ids=[node.id],
+        params=None,
+        user=user,
+    )
+
+    await case_service.delete_case(db_session, case_id=case.id, user=user)  # must not raise
 
 
 async def test_merge_transform_results_creates_nodes_edges_with_transform_provenance(

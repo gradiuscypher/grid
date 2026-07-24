@@ -35,7 +35,10 @@ class CrtShSubdomainsTransform(BaseTransform):
                     resp.raise_for_status()
                     entries = resp.json()
                 except (httpx.HTTPError, ValueError) as exc:
-                    logs.append(f"{inp.value}: crt.sh lookup failed: {exc}")
+                    # str(exc) is empty for e.g. a bare ReadTimeout() — fall back to
+                    # the exception type so the run log is never a blank reason.
+                    reason = str(exc) or type(exc).__name__
+                    logs.append(f"{inp.value}: crt.sh lookup failed: {reason}")
                     continue
 
                 seen: set[str] = set()
