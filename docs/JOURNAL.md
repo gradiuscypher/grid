@@ -5,6 +5,88 @@ happened, what surprised you, what's next. Write for the teammate who wasn't the
 
 ---
 
+## 2026-07-24 — Phase 3a: transform execution foundation (Temporal, spec, vault, 2 builtins)
+
+Branch `phase-3a-transform-foundation`, no PR yet. Phase 3 bundles seven checkboxes
+(worker, spec, vault, six builtins, remote registration + conformance kit, UI,
+example remote service) — too much for one session, and this repo's own history
+splits phases this size in half (1a/1b, 2a/2b), so scoped this session to the
+backend execution foundation only, verified end-to-end via API/WS, no UI yet.
+Posted the scope statement (worker+spec+vault+2 builtins, rest deferred to 3b/3c)
+before writing any code, per CLAUDE.md.
+
+**Built:** `transforms/spec.py` (ARCHITECTURE §6 manifest + stateless run contract
+as pydantic models — results reference entities by `(type, value)`, never internal
+node ids, so both builtins and future remote transforms stay stateless per
+ADR-007) + `transforms/base.py` (`BaseTransform`, the internal protocol builtins
+implement with the exact same shape). `core/crypto.py` is the credential vault
+(Fernet, `GRID_CREDENTIAL_KEY` — fixed dev-only default so `make dev` needs no
+`.env`, prod must override). New `transforms`/`transform_runs` tables
+(`db/models/transforms.py` + migration `bb9049a6c48e`), which also finally added
+the FK constraints on `nodes`/`edges.created_by_transform_run_id` and
+`events.actor_transform_run_id` that `ProvenanceMixin`/`Event` had left
+unconstrained since the baseline migration, pending `transform_runs` existing.
+
+`workflows/`: `RunTransformWorkflow` (resolve creds → invoke → merge, all side
+effects in activities, retries/timeouts as `RetryPolicy`/`start_to_close_timeout`
+— nothing hand-rolled) + `activities.py` + `launch.py` (API-facing: creates the
+`TransformRun` row via the service layer, starts the workflow, and — this
+mattered in practice — fails the run gracefully rather than 500ing if Temporal
+itself is unreachable) + a real `worker.py` replacing the Phase 0 placeholder.
+`services/transforms.py` has the registry (synced from code descriptors at API
+startup, same idempotent-upsert pattern as builtin entity types get in tests) and
+`merge_transform_results`, which turns a transform's result into real nodes/edges
+through the *existing* node/edge services — same dedup, same provenance, same
+events, just `created_via=TRANSFORM`. Deliberately not one giant transaction per
+run (see that function's docstring): structural dedup means a retried merge just
+re-resolves already-created rows instead of erroring or duplicating, which is the
+right property for something a Temporal activity might retry.
+
+Two builtins landed: `dns_forward`/`dns_reverse` (dnspython) and
+`crtsh_subdomains` (httpx, crt.sh's free JSON API) — the exact two the Phase 3
+exit criteria names for the live fan-out demo. RDAP, TLS cert, Shodan, and
+VirusTotal are Phase 3b, along with remote transform registration + the
+conformance kit + the example remote service in `examples/` (all deferred, not
+forgotten — noted inline in PLAN.md). API surface:
+`GET /transforms(?input_type=)`, `GET /transforms/{id}`,
+`POST/GET /cases/{id}/transform-runs`, `GET .../transform-runs/{id}`.
+
+**Two real bugs, found only by actually running it, not by the test suite:**
+1. The workflow's failure handler did `str(exc)` on the `ActivityError` Temporal
+   wraps activity failures in — whose own message is the generic "Activity task
+   failed", discarding the real reason. Fixed by unwrapping `exc.__cause__`.
+   Caught by the Temporal time-skipping-test-server workflow test
+   (`tests/workflows/test_transform_workflow.py`) once the fake failing activity's
+   assertion on the propagated error message failed — the test was right, the
+   workflow was wrong.
+2. Ran the whole pipeline for real against the live dev stack (real Temporal,
+   real Postgres, real DNS + crt.sh, not mocks): seeded a domain node, ran
+   `dns_forward` through the real workflow, watched `node.created`/`edge.created`/
+   `transform_run.completed` arrive live over WS with correct `transform`
+   provenance — worked first try. Then tried to clean up the demo case afterward
+   and hit `ForeignKeyViolation: ... still referenced from table
+   "transform_runs"` — `case_service.delete_case` (Phase 1, no DB-level cascade by
+   design, every dependent table cleared by hand in FK-safe order) was never
+   updated for the `transform_runs.case_id` FK this phase added. Fixed with a
+   regression test. Also: crt.sh genuinely timed out against the live service
+   (already flagged in ARCHITECTURE as best-effort/free), and the resulting run
+   log read "crt.sh lookup failed: " — blank, because `str(ReadTimeout())` is
+   empty. Falls back to the exception type name when the message is empty.
+
+Neither of these would have been caught by the automated suite as it stood before
+this session — worth remembering that "tests pass" and "ran it for real" are
+different claims, especially for anything touching cascade deletes or exception
+message formatting.
+
+**Verified for real:** `make lint typecheck test` clean (106 backend + 34
+frontend), `make api-client` regenerated cleanly (no manual edits needed, no
+frontend consumer yet — that's Phase 3c). Live curl+WS demo against the real
+`make dev` stack as described above; demo account/case cleaned up from the dev DB
+afterward via the service layer (not raw SQL).
+
+Next: Phase 3b (remaining builtins, remote transform registration + conformance
+kit, example remote service) or 3c (transform UI) — gradius's call on order.
+
 ## 2026-07-23 — User lookup-by-email, to unblock cross-account sync testing
 
 gradius realized there was no way to actually get a second account onto a case to test

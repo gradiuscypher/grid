@@ -79,20 +79,24 @@ suite green; both themes usable.
 
 **Goal:** right-click a node, run a transform, watch results land on the canvas.
 
-- [ ] Temporal worker wiring (real entrypoint), `RunTransformWorkflow`: resolve creds →
+- [x] Temporal worker wiring (real entrypoint), `RunTransformWorkflow`: resolve creds →
       invoke → merge via services (dedup, provenance, transform_run linkage) —
-      retries/timeouts as Temporal policies
-- [ ] Transform spec v1 (ARCHITECTURE §6): manifest + stateless run contract; internal
-      Python protocol for builtins matching the same shape
-- [ ] Credential vault: Fernet-encrypted at rest, deployment key from env; creds
-      never logged or in events
+      retries/timeouts as Temporal policies (Phase 3a, 2026-07-24)
+- [x] Transform spec v1 (ARCHITECTURE §6): manifest + stateless run contract; internal
+      Python protocol for builtins matching the same shape (Phase 3a, 2026-07-24)
+- [x] Credential vault: Fernet-encrypted at rest, deployment key from env; creds
+      never logged or in events (Phase 3a, 2026-07-24)
 - [ ] Builtins: DNS forward/reverse, RDAP (domain + IP), crt.sh subdomains, TLS cert
-      fetch/parse, Shodan host lookup, VirusTotal (domain/IP/hash)
+      fetch/parse, Shodan host lookup, VirusTotal (domain/IP/hash) — **DNS forward/
+      reverse + crt.sh subdomains done (Phase 3a, 2026-07-24)**; RDAP, TLS cert,
+      Shodan, VirusTotal remain (Phase 3b)
 - [ ] Remote transforms: register by base URL → fetch manifest → autoconfigure;
-      spec conformance test kit (runnable against builtin or remote)
+      spec conformance test kit (runnable against builtin or remote) — Phase 3b
 - [ ] UI: node context menu + palette listing transforms filtered by entity type; run
-      status indicator; results stream in via events; transform run history view
-- [ ] Example remote transform in `examples/` (tiny FastAPI service) proving the spec
+      status indicator; results stream in via events; transform run history view —
+      Phase 3c
+- [ ] Example remote transform in `examples/` (tiny FastAPI service) proving the
+      spec — Phase 3b
 
 **Exit criteria:** seed a domain node → crt.sh + DNS transforms fan out a subdomain/IP
 graph live; a credentialed transform (Shodan or VT) works; the example remote
