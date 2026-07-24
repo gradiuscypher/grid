@@ -57,9 +57,12 @@ class RunTransformWorkflow:
                 retry_policy=_SHORT_RETRY,
             )
         except Exception as exc:
+            # Activity failures arrive wrapped in ActivityError, whose own message is
+            # the generic "Activity task failed" — the real reason is on __cause__.
+            error = str(exc.__cause__) if exc.__cause__ is not None else str(exc)
             await workflow.execute_activity(
                 mark_run_failed_activity,
-                args=[run_id, str(exc)],
+                args=[run_id, error],
                 start_to_close_timeout=_SHORT_TIMEOUT,
                 retry_policy=_SHORT_RETRY,
             )
