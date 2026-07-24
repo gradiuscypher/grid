@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     # GRID_COOKIE_SECURE=true.
     cookie_secure: bool = False
 
+    temporal_address: str = Field(validation_alias="TEMPORAL_ADDRESS", default="localhost:7233")
+    temporal_task_queue: str = "grid-transforms"
+
+    # Fernet key for the credential vault (transform creds at rest, ARCHITECTURE §6).
+    # This default is a fixed dev-only key so `make dev` works with no .env — prod
+    # MUST override GRID_CREDENTIAL_KEY (see .env.example). Never used to encrypt
+    # anything sensitive outside a throwaway dev stack.
+    credential_key: str = "jXAOl5PJA_14ZLxLV24UULyVhNqQxPOjxRkchYFxbiQ="
+
 
 @lru_cache
 def get_settings() -> Settings:
